@@ -4,6 +4,28 @@
  */
 function reflectWish() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const mainSheet = ss.getSheetByName(MAIN);
+  if (!mainSheet) return;
+
+  // メインシートからスタッフ情報を取得（氏名と表示名）
+  const staffData = mainSheet
+    .getRange(
+      MAIN_STAFF_START_ROW,
+      MAIN_STAFF_NAME_COL,
+      MAIN_STAFF_END_ROW - MAIN_STAFF_START_ROW + 1,
+      2
+    )
+    .getValues();
+
+  // 氏名と表示名のマッピングを作成（空でないもののみ）
+  const staffMapping = staffData
+    .map((row, index) => ({
+      fullName: row[0], // 氏名（フルネーム）
+      displayName: row[1], // 表示名（苗字）
+      index: index,
+    }))
+    .filter((staff) => staff.fullName && staff.displayName); // 空でないもののみ
+
   // 全シート名を取得
   const sheetNames = ss.getSheets().map((sheet) => sheet.getName());
 
@@ -14,25 +36,14 @@ function reflectWish() {
     const dailySheet = ss.getSheetByName(dailySheetName);
     if (!dailySheet) return;
 
-    // ヘッダー行からスタッフ表示名を取得
-    const staffNames = dailySheet
-      .getRange(
-        DATE_NAME_ROW,
-        DATE_NAME_START_COL,
-        1,
-        dailySheet.getLastColumn() - DATE_NAME_START_COL + 1
-      )
-      .getValues()[0];
+    // 日付シートのA1セルなどから日付を取得（A1に日付が入っている前提）
+    const dateValue = dailySheet.getRange("A1").getValue();
+    if (!dateValue) return;
 
-    staffNames.forEach((staffName, i) => {
-      if (!staffName) return; // 空欄はスキップ
-
-      const staffSheet = ss.getSheetByName(staffName);
+    // 各スタッフについて処理
+    staffMapping.forEach((staff) => {
+      const staffSheet = ss.getSheetByName(staff.fullName);
       if (!staffSheet) return; // 個人シートがなければスキップ
-
-      // 日付シートのA1セルなどから日付を取得（A1に日付が入っている前提）
-      const dateValue = dailySheet.getRange("A1").getValue();
-      if (!dateValue) return;
 
       // 個人シート内で該当日付の行を特定
       const staffDates = staffSheet
@@ -52,20 +63,20 @@ function reflectWish() {
       if (dateRowOffset === -1) {
         // 一致する日付がなければfalseを書き込む
         dailySheet
-          .getRange(DATE_WISH_ROW, DATE_NAME_START_COL + i)
+          .getRange(DATE_WISH_ROW, DATE_NAME_START_COL + staff.index)
           .setValue(false);
         return;
       }
 
       // 希望値を取得
       const wishValue = staffSheet
-        .getRange(STAFF_WISH_ROW + dateRowOffset, STAFF_WISH_COL)
+        .getRange(STAFF_DATE_START_ROW + dateRowOffset, STAFF_WISH_COL)
         .getValue();
 
       // 希望がWISH_TRUEならWISH_TRUE、そうでなければfalse
       const result = wishValue === WISH_TRUE ? WISH_TRUE : false;
       dailySheet
-        .getRange(DATE_WISH_ROW, DATE_NAME_START_COL + i)
+        .getRange(DATE_WISH_ROW, DATE_NAME_START_COL + staff.index)
         .setValue(result);
     });
   });

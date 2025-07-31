@@ -7,8 +7,6 @@ const DATE_STAFF = "Date_Staff";
 // スタッフ個別情報テンプレートシート名
 const TEMPLATE_STAFF = "Template_Staff";
 
-
-
 // =====　メインシート 行列インデックス =====
 
 // 日程リスト列
@@ -33,8 +31,6 @@ const MAIN_STAFF_START_ROW = 4;
 // スタッフリスト終了行
 const MAIN_STAFF_END_ROW = 13;
 
-
-
 // =====　日程別講師割テンプレートシート 行列インデックス =====
 
 // スタッフ氏名行
@@ -49,8 +45,6 @@ const DATE_LESSON1_ROW = 3;
 const DATE_LESSON2_ROW = 4;
 // ３コマ目行
 const DATE_LESSON3_ROW = 5;
-
-
 
 // ===== 曜日シート 行列インデックス =====
 
@@ -78,7 +72,6 @@ const WEEK_SIXTH_COL = 8;
 
 
 
-
 // ===== スタッフ個別情報テンプレートシート 行列インデックス =====
 
 // スタッフ氏名行
@@ -96,7 +89,9 @@ const STAFF_DATE_START_ROW = 5;
 // 日程リスト終了行
 const STAFF_DATE_END_ROW = 11;
 // 日程リスト列
-const STAFF_DATE_COL = 2;
+const STAFF_DATE_COL = 1;
+// 希望列
+const STAFF_WISH_COL = 2;
 
 // 年長行
 const STAFF_YOUNG_ROW = 5;
@@ -126,8 +121,6 @@ const STAFF_ALGO_COL = 9;
 // プレ列
 const STAFF_PRE_COL = 10;
 
-
-
 // ===== 文字列 =====
 
 // 希望◯
@@ -144,21 +137,3 @@ const SUBMIT_FALSE = "未提出";
 const REFLECT_TRUE = "✅反映済み";
 // 未反映
 const REFLECT_FALSE = "未反映";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
