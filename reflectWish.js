@@ -61,10 +61,10 @@ function reflectWish() {
         isSameDate(d, dateValue)
       );
       if (dateRowOffset === -1) {
-        // 一致する日付がなければfalseを書き込む
+        // 一致する日付がなければWISH_FALSEを書き込む
         dailySheet
           .getRange(DATE_WISH_ROW, DATE_NAME_START_COL + staff.index)
-          .setValue(false);
+          .setValue(WISH_FALSE);
         return;
       }
 
@@ -73,8 +73,8 @@ function reflectWish() {
         .getRange(STAFF_DATE_START_ROW + dateRowOffset, STAFF_WISH_COL)
         .getValue();
 
-      // 希望がWISH_TRUEならWISH_TRUE、そうでなければfalse
-      const result = wishValue === WISH_TRUE ? WISH_TRUE : false;
+      // 希望がWISH_TRUEならWISH_TRUE、そうでなければWISH_FALSE
+      const result = wishValue === WISH_TRUE ? WISH_TRUE : WISH_FALSE;
       dailySheet
         .getRange(DATE_WISH_ROW, DATE_NAME_START_COL + staff.index)
         .setValue(result);
