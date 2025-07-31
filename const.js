@@ -8,6 +8,7 @@ const DATE_STAFF = "Date_Staff";
 const TEMPLATE_STAFF = "Template_Staff";
 
 
+
 // =====　メインシート 行列インデックス =====
 
 // 日程リスト列
@@ -33,13 +34,121 @@ const MAIN_STAFF_START_ROW = 4;
 const MAIN_STAFF_END_ROW = 13;
 
 
+
 // =====　日程別講師割テンプレートシート 行列インデックス =====
 
 // スタッフ氏名行
 const DATE_NAME_ROW = 1;
-
 // スタッフ氏名開始列
 const DATE_NAME_START_COL = 2;
+// 希望行
+const DATE_WISH_ROW = 2;
+// １コマ目行
+const DATE_LESSON1_ROW = 3;
+// ２コマ目行
+const DATE_LESSON2_ROW = 4;
+// ３コマ目行
+const DATE_LESSON3_ROW = 5;
+
+
+
+// ===== 曜日シート 行列インデックス =====
+
+// 1コマ目行
+const WEEK_LESSON1_ROW = 3;
+// 2コマ目行
+const WEEK_LESSON2_ROW = 4;
+// 3コマ目行
+const WEEK_LESSON3_ROW = 5;
+
+// 年長列
+const WEEK_YOUNG_COL = 2;
+// 小１列
+const WEEK_FIRST_COL = 3;
+// 小２列
+const WEEK_SECOND_COL = 4;
+// 小３列
+const WEEK_THIRD_COL = 5;
+// 小４列
+const WEEK_FOURTH_COL = 6;
+// 小５列
+const WEEK_FIFTH_COL = 7;
+// 小６列
+const WEEK_SIXTH_COL = 8;
+
+
+
+
+// ===== スタッフ個別情報テンプレートシート 行列インデックス =====
+
+// スタッフ氏名行
+const STAFF_NAME_ROW = 1;
+// スタッフ氏名列
+const STAFF_NAME_COL = 2;
+
+// チェック行
+const STAFF_CHECK_ROW = 1;
+// チェック列
+const STAFF_CHECK_COL = 4;
+
+// 日程リスト開始行
+const STAFF_DATE_START_ROW = 5;
+// 日程リスト終了行
+const STAFF_DATE_END_ROW = 11;
+// 日程リスト列
+const STAFF_DATE_COL = 2;
+
+// 年長行
+const STAFF_YOUNG_ROW = 5;
+// 小１行
+const STAFF_FIRST_ROW = 6;
+// 小２行
+const STAFF_SECOND_ROW = 7;
+// 小３行
+const STAFF_THIRD_ROW = 8;
+// 小４行
+const STAFF_FOURTH_ROW = 9;
+// 小５行
+const STAFF_FIFTH_ROW = 10;
+// 小６行
+const STAFF_SIXTH_ROW = 11;
+
+// 算数列
+const STAFF_MAT_COL = 5;
+// 国語列
+const STAFF_JAP_COL = 6;
+// 理科列
+const STAFF_SCI_COL = 7;
+// 社会列
+const STAFF_SOC_COL = 8;
+// アルゴ列
+const STAFF_ALGO_COL = 9;
+// プレ列
+const STAFF_PRE_COL = 10;
+
+
+
+// ===== 文字列 =====
+
+// 希望◯
+const WISH_TRUE = "◯";
+// 希望×
+const WISH_FALSE = "×";
+
+// 提出済み
+const SUBMIT_TRUE = "✅提出済み";
+// 未提出
+const SUBMIT_FALSE = "未提出";
+
+// 反映済み
+const REFLECT_TRUE = "✅反映済み";
+// 未反映
+const REFLECT_FALSE = "未反映";
+
+
+
+
+
 
 
 
