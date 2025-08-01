@@ -3,7 +3,7 @@
 // メインシート名
 const MAIN = "Main";
 // 日程別講師割テンプレートシート名
-const DATE_STAFF = "Date_Staff";
+const TEMPLATE_DATE = "Template_Date";
 // スタッフ個別情報テンプレートシート名
 const TEMPLATE_STAFF = "Template_Staff";
 
@@ -31,7 +31,13 @@ const MAIN_STAFF_START_ROW = 4;
 // スタッフリスト終了行
 const MAIN_STAFF_END_ROW = 13;
 
+
 // =====　日程別講師割テンプレートシート 行列インデックス =====
+
+// 日付行
+const DATE_DATE_ROW = 1;
+// 日付列
+const DATE_DATE_COL = 1;
 
 // スタッフ氏名行
 const DATE_NAME_ROW = 1;
@@ -45,6 +51,8 @@ const DATE_LESSON1_ROW = 3;
 const DATE_LESSON2_ROW = 4;
 // ３コマ目行
 const DATE_LESSON3_ROW = 5;
+
+
 
 // ===== 曜日シート 行列インデックス =====
 

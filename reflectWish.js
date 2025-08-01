@@ -36,8 +36,8 @@ function reflectWish() {
     const dailySheet = ss.getSheetByName(dailySheetName);
     if (!dailySheet) return;
 
-    // 日付シートのA1セルなどから日付を取得（A1に日付が入っている前提）
-    const dateValue = dailySheet.getRange("A1").getValue();
+    // 日付シートのA1セルなどから日付を取得
+    const dateValue = dailySheet.getRange(DATE_DATE_ROW, DATE_DATE_COL).getValue();
     if (!dateValue) return;
 
     // 各スタッフについて処理
@@ -88,7 +88,7 @@ function reflectWish() {
  */
 function isDailySheetName(name) {
   // 必要に応じて除外シート名を追加
-  const exclude = [MAIN, DATE_STAFF, TEMPLATE_STAFF, "Template_Date"];
+  const exclude = [MAIN, TEMPLATE_DATE, TEMPLATE_STAFF];
   if (exclude.includes(name)) return false;
   // "M/d"形式（例: 7/30）かどうか
   return /^\d{1,2}\/\d{1,2}$/.test(name);
