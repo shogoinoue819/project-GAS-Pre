@@ -4,7 +4,18 @@
 function linkStaffList() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const mainSheet = ss.getSheetByName(MAIN);
+
+  if (!mainSheet) {
+    throw new Error(`メインシート「${MAIN}」が見つかりません。`);
+  }
+
   const templateDailySheet = ss.getSheetByName(TEMPLATE_DAILY);
+
+  if (!templateDailySheet) {
+    throw new Error(
+      `テンプレートシート「${TEMPLATE_DAILY}」が見つかりません。\nテンプレートシートを作成してから実行してください。`
+    );
+  }
 
   // 表示名と背景色をメインシートから取得
   const displayNames = mainSheet

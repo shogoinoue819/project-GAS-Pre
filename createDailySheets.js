@@ -4,7 +4,18 @@
 function createDailySheets() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const mainSheet = ss.getSheetByName(MAIN);
+
+  if (!mainSheet) {
+    throw new Error(`メインシート「${MAIN}」が見つかりません。`);
+  }
+
   const templateSheet = ss.getSheetByName(TEMPLATE_DAILY);
+
+  if (!templateSheet) {
+    throw new Error(
+      `テンプレートシート「${TEMPLATE_DAILY}」が見つかりません。\nテンプレートシートを作成してから実行してください。`
+    );
+  }
 
   for (let row = MAIN_DATE_START_ROW; row <= MAIN_DATE_END_ROW; row++) {
     const dateValue = mainSheet.getRange(row, MAIN_DATE_COL).getValue();

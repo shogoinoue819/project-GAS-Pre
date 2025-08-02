@@ -4,7 +4,16 @@
 function createStaffSheets() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const mainSheet = ss.getSheetByName(MAIN);
+  
+  if (!mainSheet) {
+    throw new Error(`メインシート「${MAIN}」が見つかりません。`);
+  }
+  
   const templateSheet = ss.getSheetByName(TEMPLATE_STAFF);
+  
+  if (!templateSheet) {
+    throw new Error(`テンプレートシート「${TEMPLATE_STAFF}」が見つかりません。\nテンプレートシートを作成してから実行してください。`);
+  }
 
   for (let row = MAIN_STAFF_START_ROW; row <= MAIN_STAFF_END_ROW; row++) {
     const staffName = mainSheet.getRange(row, MAIN_STAFF_NAME_COL).getValue();
