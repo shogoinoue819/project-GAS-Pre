@@ -59,18 +59,8 @@ function reflectLessons() {
       }
 
       // 日付からDateオブジェクトを作成
-      let targetDate;
-      if (typeof dateValue === "string") {
-        // 文字列の場合（例："7/30"）
-        const dateParts = dateValue.split("/");
-        const month = parseInt(dateParts[0]);
-        const day = parseInt(dateParts[1]);
-        const currentYear = new Date().getFullYear();
-        targetDate = new Date(currentYear, month - 1, day);
-      } else if (dateValue instanceof Date) {
-        // Dateオブジェクトの場合
-        targetDate = dateValue;
-      } else {
+      const targetDate = parseDateValue(dateValue);
+      if (!targetDate) {
         Logger.log(
           `日次シート「${dailySheetName}」の日付形式が不正です: ${dateValue}`
         );
@@ -80,13 +70,7 @@ function reflectLessons() {
       // 曜日を判定
       const dayOfWeek = getDayOfWeek(targetDate);
       const displayDate =
-        typeof dateValue === "string"
-          ? dateValue
-          : Utilities.formatDate(
-              targetDate,
-              Session.getScriptTimeZone(),
-              "M/d"
-            );
+        typeof dateValue === "string" ? dateValue : formatDateToMD(targetDate);
       Logger.log(`日付: ${displayDate}, 曜日: ${dayOfWeek}`);
 
       // 曜日テンプレートシートを取得
@@ -122,13 +106,7 @@ function reflectLessons() {
 
       // 未割り当て講義の詳細を記録
       const recordDate =
-        typeof dateValue === "string"
-          ? dateValue
-          : Utilities.formatDate(
-              targetDate,
-              Session.getScriptTimeZone(),
-              "M/d"
-            );
+        typeof dateValue === "string" ? dateValue : formatDateToMD(targetDate);
       unassignedLessons.forEach((lesson) => {
         allResults.unassignedDetails.push({
           date: recordDate,
@@ -150,7 +128,7 @@ function reflectLessons() {
 
     Logger.log("=== 全日次シートでの講師割り当て処理完了 ===");
   } catch (error) {
-    Logger.log(`全日次シート処理でエラーが発生しました: ${error.message}`);
+    logError("全日次シート処理でエラーが発生しました", error);
     throw error;
   }
 }

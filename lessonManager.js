@@ -3,23 +3,7 @@
  * 講義情報の取得、解析、管理を行う
  */
 
-/**
- * 日付から曜日を取得する
- * @param {Date} date - 日付オブジェクト
- * @returns {string} 曜日（例：月曜日、火曜日...）
- */
-function getDayOfWeek(date) {
-  const weekdays = [
-    WEEK_SUN, // 日曜日 (index 0)
-    WEEK_MON, // 月曜日 (index 1)
-    WEEK_TUE, // 火曜日 (index 2)
-    WEEK_WED, // 水曜日 (index 3)
-    WEEK_THU, // 木曜日 (index 4)
-    WEEK_FRI, // 金曜日 (index 5)
-    WEEK_SAT, // 土曜日 (index 6)
-  ];
-  return weekdays[date.getDay()];
-}
+
 
 /**
  * 現在の日付の講義情報を取得する
@@ -30,11 +14,7 @@ function getCurrentDateLessons() {
 
   // 現在の日付を取得
   const currentDate = new Date();
-  const currentDateFormatted = Utilities.formatDate(
-    currentDate,
-    Session.getScriptTimeZone(),
-    "M/d"
-  );
+  const currentDateFormatted = formatDateToMD(currentDate);
 
   // 現在の日付シートを取得
   const currentDateSheet = ss.getSheetByName(currentDateFormatted);

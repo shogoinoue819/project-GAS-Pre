@@ -10,7 +10,6 @@ function createCustomMenu() {
     .addItem("スタッフ情報反映", "linkStaffList")
     .addItem("希望シフト反映", "reflectWish")
     .addItem("教科担当更新", "updatePrioritySheetFromStaffSheets")
-    .addSeparator()
     .addItem("全日程授業反映", "reflectLessons")
     .addToUi();
 }

@@ -76,7 +76,7 @@ function assignTeachersToLessons(lessons, dateSheet, prioritySheet) {
 
     Logger.log("講師割り当て処理が完了しました");
   } catch (error) {
-    Logger.log(`講師割り当て処理でエラーが発生しました: ${error.message}`);
+    logError("講師割り当て処理でエラーが発生しました", error);
     throw error;
   }
 }
