@@ -58,16 +58,36 @@ function reflectAllDailySheets() {
         return;
       }
 
-      // 日付文字列からDateオブジェクトを作成
-      const dateParts = dateValue.split("/");
-      const month = parseInt(dateParts[0]);
-      const day = parseInt(dateParts[1]);
-      const currentYear = new Date().getFullYear();
-      const targetDate = new Date(currentYear, month - 1, day);
+      // 日付からDateオブジェクトを作成
+      let targetDate;
+      if (typeof dateValue === "string") {
+        // 文字列の場合（例："7/30"）
+        const dateParts = dateValue.split("/");
+        const month = parseInt(dateParts[0]);
+        const day = parseInt(dateParts[1]);
+        const currentYear = new Date().getFullYear();
+        targetDate = new Date(currentYear, month - 1, day);
+      } else if (dateValue instanceof Date) {
+        // Dateオブジェクトの場合
+        targetDate = dateValue;
+      } else {
+        Logger.log(
+          `日次シート「${dailySheetName}」の日付形式が不正です: ${dateValue}`
+        );
+        return;
+      }
 
       // 曜日を判定
       const dayOfWeek = getDayOfWeek(targetDate);
-      Logger.log(`日付: ${dateValue}, 曜日: ${dayOfWeek}`);
+      const displayDate =
+        typeof dateValue === "string"
+          ? dateValue
+          : Utilities.formatDate(
+              targetDate,
+              Session.getScriptTimeZone(),
+              "M/d"
+            );
+      Logger.log(`日付: ${displayDate}, 曜日: ${dayOfWeek}`);
 
       // 曜日テンプレートシートを取得
       const weekdayTemplateSheet = ss.getSheetByName(dayOfWeek);
@@ -101,9 +121,17 @@ function reflectAllDailySheets() {
       allResults.totalUnassigned += unassignedLessons.length;
 
       // 未割り当て講義の詳細を記録
+      const recordDate =
+        typeof dateValue === "string"
+          ? dateValue
+          : Utilities.formatDate(
+              targetDate,
+              Session.getScriptTimeZone(),
+              "M/d"
+            );
       unassignedLessons.forEach((lesson) => {
         allResults.unassignedDetails.push({
-          date: dateValue,
+          date: recordDate,
           period: lesson.period,
           lessonCode: lesson.lessonCode,
           grade: lesson.grade,
