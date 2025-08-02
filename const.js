@@ -2,9 +2,9 @@
 
 // メインシート名
 const MAIN = "Main";
-// 日程別講師割テンプレートシート名
-const TEMPLATE_DATE = "Template_Date";
-// スタッフ個別情報テンプレートシート名
+// 日次テンプレートシート名
+const TEMPLATE_DAILY = "Template_Daily";
+// スタッフテンプレートシート名
 const TEMPLATE_STAFF = "Template_Staff";
 
 // =====　メインシート 行列インデックス =====
@@ -31,28 +31,24 @@ const MAIN_STAFF_START_ROW = 4;
 // スタッフリスト終了行
 const MAIN_STAFF_END_ROW = 13;
 
-
-// =====　日程別講師割テンプレートシート 行列インデックス =====
+// =====　日次シート 行列インデックス =====
 
 // 日付行
-const DATE_DATE_ROW = 1;
+const DAILY_DATE_ROW = 1;
 // 日付列
-const DATE_DATE_COL = 1;
-
-// スタッフ氏名行
-const DATE_NAME_ROW = 1;
-// スタッフ氏名開始列
-const DATE_NAME_START_COL = 2;
+const DAILY_DATE_COL = 1;
+// スタッフ表示名行
+const DAILY_STAFF_ROW = 1;
+// スタッフ表示名開始列
+const DAILY_STAFF_START_COL = 2;
 // 希望行
-const DATE_WISH_ROW = 2;
+const DAILY_WISH_ROW = 2;
 // １コマ目行
-const DATE_LESSON1_ROW = 3;
+const DAILY_LESSON1_ROW = 3;
 // ２コマ目行
-const DATE_LESSON2_ROW = 4;
+const DAILY_LESSON2_ROW = 4;
 // ３コマ目行
-const DATE_LESSON3_ROW = 5;
-
-
+const DAILY_LESSON3_ROW = 5;
 
 // ===== 曜日シート 行列インデックス =====
 
@@ -78,15 +74,12 @@ const WEEK_FIFTH_COL = 7;
 // 小６列
 const WEEK_SIXTH_COL = 8;
 
-
-
-// ===== スタッフ個別情報テンプレートシート 行列インデックス =====
+// ===== スタッフシート 行列インデックス =====
 
 // スタッフ氏名行
 const STAFF_NAME_ROW = 1;
 // スタッフ氏名列
 const STAFF_NAME_COL = 2;
-
 // チェック行
 const STAFF_CHECK_ROW = 1;
 // チェック列
@@ -129,7 +122,7 @@ const STAFF_ALGO_COL = 9;
 // プレ列
 const STAFF_PRE_COL = 10;
 
-// ===== 文字列 =====
+// ===== 文字列定数 =====
 
 // 希望◯
 const WISH_TRUE = "◯";

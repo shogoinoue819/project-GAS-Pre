@@ -1,6 +1,6 @@
 /**
- * 各日付シートの各スタッフ列に対し、該当スタッフの個人シートから希望シフトを取得し、
- * 希望がWISH_TRUEなら日付シートの希望行にWISH_TRUEを、そうでなければfalseを記入する。
+ * 各日次シートの各スタッフ列に対し、該当スタッフの個人シートから希望シフトを取得し、
+ * 希望がWISH_TRUEなら日次シートの希望行にWISH_TRUEを、そうでなければWISH_FALSEを記入する。
  */
 function reflectWish() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -29,15 +29,17 @@ function reflectWish() {
   // 全シート名を取得
   const sheetNames = ss.getSheets().map((sheet) => sheet.getName());
 
-  // 日付シートのみを抽出（テンプレートやメイン、スタッフ個人シートを除外）
+  // 日次シートのみを抽出（テンプレートやメイン、スタッフ個人シートを除外）
   const dailySheetNames = sheetNames.filter((name) => isDailySheetName(name));
 
   dailySheetNames.forEach((dailySheetName) => {
     const dailySheet = ss.getSheetByName(dailySheetName);
     if (!dailySheet) return;
 
-    // 日付シートのA1セルなどから日付を取得
-    const dateValue = dailySheet.getRange(DATE_DATE_ROW, DATE_DATE_COL).getValue();
+    // 日次シートから日付を取得
+    const dateValue = dailySheet
+      .getRange(DAILY_DATE_ROW, DAILY_DATE_COL)
+      .getValue();
     if (!dateValue) return;
 
     // 各スタッフについて処理
@@ -63,7 +65,7 @@ function reflectWish() {
       if (dateRowOffset === -1) {
         // 一致する日付がなければWISH_FALSEを書き込む
         dailySheet
-          .getRange(DATE_WISH_ROW, DATE_NAME_START_COL + staff.index)
+          .getRange(DAILY_WISH_ROW, DAILY_STAFF_START_COL + staff.index)
           .setValue(WISH_FALSE);
         return;
       }
@@ -76,19 +78,19 @@ function reflectWish() {
       // 希望がWISH_TRUEならWISH_TRUE、そうでなければWISH_FALSE
       const result = wishValue === WISH_TRUE ? WISH_TRUE : WISH_FALSE;
       dailySheet
-        .getRange(DATE_WISH_ROW, DATE_NAME_START_COL + staff.index)
+        .getRange(DAILY_WISH_ROW, DAILY_STAFF_START_COL + staff.index)
         .setValue(result);
     });
   });
 }
 
 /**
- * 日付シート名かどうかを判定するヘルパー
+ * 日次シート名かどうかを判定するヘルパー
  * 例: "7/30" のような日付形式のみtrue
  */
 function isDailySheetName(name) {
   // 必要に応じて除外シート名を追加
-  const exclude = [MAIN, TEMPLATE_DATE, TEMPLATE_STAFF];
+  const exclude = [MAIN, TEMPLATE_DAILY, TEMPLATE_STAFF];
   if (exclude.includes(name)) return false;
   // "M/d"形式（例: 7/30）かどうか
   return /^\d{1,2}\/\d{1,2}$/.test(name);

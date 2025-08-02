@@ -1,24 +1,27 @@
+/**
+ * メインシートのスタッフリストからスタッフシートを生成する
+ */
 function createStaffSheets() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const mainSheet = ss.getSheetByName("Main");
-  const templateSheet = ss.getSheetByName("Template_Staff");
+  const mainSheet = ss.getSheetByName(MAIN);
+  const templateSheet = ss.getSheetByName(TEMPLATE_STAFF);
 
   for (let row = MAIN_STAFF_START_ROW; row <= MAIN_STAFF_END_ROW; row++) {
-    const name = mainSheet.getRange(row, MAIN_STAFF_NAME_COL).getValue();
-    if (!name) continue;
+    const staffName = mainSheet.getRange(row, MAIN_STAFF_NAME_COL).getValue();
+    if (!staffName) continue;
 
     // 既存シートがあれば削除
-    const existingSheet = ss.getSheetByName(name);
+    const existingSheet = ss.getSheetByName(staffName);
     if (existingSheet) {
       ss.deleteSheet(existingSheet);
     }
 
     // テンプレートを複製＆リネーム
     const newSheet = templateSheet.copyTo(ss);
-    newSheet.setName(name);
+    newSheet.setName(staffName);
 
-    // A2セルに名前をセット
-    newSheet.getRange("B1").setValue(name);
+    // スタッフ名セルに名前をセット
+    newSheet.getRange(STAFF_NAME_ROW, STAFF_NAME_COL).setValue(staffName);
   }
 
   Logger.log("スタッフシートの生成が完了しました！");

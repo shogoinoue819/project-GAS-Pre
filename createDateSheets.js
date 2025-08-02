@@ -1,7 +1,10 @@
-function createDateSheets() {
+/**
+ * メインシートの日程リストから日次シートを生成する
+ */
+function createDailySheets() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const mainSheet = ss.getSheetByName("Main");
-  const templateSheet = ss.getSheetByName("Template_Date");
+  const mainSheet = ss.getSheetByName(MAIN);
+  const templateSheet = ss.getSheetByName(TEMPLATE_DAILY);
 
   for (let row = MAIN_DATE_START_ROW; row <= MAIN_DATE_END_ROW; row++) {
     const dateValue = mainSheet.getRange(row, MAIN_DATE_COL).getValue();
@@ -24,12 +27,12 @@ function createDateSheets() {
     const newSheet = templateSheet.copyTo(ss);
     newSheet.setName(sheetName);
 
-    // A1セルに日付をセット（M/d形式で）
-    newSheet.getRange("A1").setValue(sheetName);
+    // 日付セルに日付をセット（M/d形式で）
+    newSheet.getRange(DAILY_DATE_ROW, DAILY_DATE_COL).setValue(sheetName);
 
     // 日程ごとに完了ログを出力
     Logger.log(`${sheetName} のシート生成が完了しました`);
   }
 
-  Logger.log("日程シートの生成が完了しました！");
+  Logger.log("日次シートの生成が完了しました！");
 }
