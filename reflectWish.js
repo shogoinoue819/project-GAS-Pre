@@ -87,6 +87,196 @@ function reflectWish() {
 }
 
 /**
+ * スタッフシートの授業可能欄から情報を取得し、Priorityシートに表示名を追加する
+ */
+function updatePrioritySheetFromStaffSheets() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const mainSheet = ss.getSheetByName(MAIN);
+  const prioritySheet = ss.getSheetByName(PRIORITY);
+
+  if (!mainSheet || !prioritySheet) {
+    Logger.log("メインシートまたはPriorityシートが見つかりません");
+    return;
+  }
+
+  // メインシートからスタッフ情報を取得（氏名と表示名）
+  const staffData = mainSheet
+    .getRange(
+      MAIN_STAFF_START_ROW,
+      MAIN_STAFF_NAME_COL,
+      MAIN_STAFF_END_ROW - MAIN_STAFF_START_ROW + 1,
+      2
+    )
+    .getValues();
+
+  // 氏名と表示名のマッピングを作成（空でないもののみ）
+  const staffMapping = staffData
+    .map((row) => ({
+      fullName: row[0], // 氏名（フルネーム）
+      displayName: row[1], // 表示名（苗字）
+    }))
+    .filter((staff) => staff.fullName && staff.displayName);
+
+  Logger.log("Priorityシートの更新を開始します...");
+
+  // 各スタッフについて処理
+  staffMapping.forEach((staff) => {
+    const staffSheet = ss.getSheetByName(staff.fullName);
+    if (!staffSheet) {
+      Logger.log(`スタッフシート「${staff.fullName}」が見つかりません`);
+      return;
+    }
+
+    // スタッフシートから授業可能な学年・教科を取得
+    const availableLessons = getAvailableLessonsFromStaffSheet(staffSheet);
+
+    if (availableLessons.length > 0) {
+      Logger.log(
+        `スタッフ「${
+          staff.displayName
+        }」の授業可能科目: ${availableLessons.join(", ")}`
+      );
+
+      // 各授業コードについてPriorityシートを更新
+      availableLessons.forEach((lessonCode) => {
+        updatePrioritySheetForLesson(
+          prioritySheet,
+          lessonCode,
+          staff.displayName
+        );
+      });
+    }
+  });
+
+  Logger.log("Priorityシートの更新が完了しました");
+}
+
+/**
+ * スタッフシートから授業可能な学年・教科を取得
+ * @param {Sheet} staffSheet - スタッフシート
+ * @returns {Array} 授業可能な講義コードの配列
+ */
+function getAvailableLessonsFromStaffSheet(staffSheet) {
+  const availableLessons = [];
+
+  // 学年別の授業可能チェック
+  const gradeRows = [
+    { row: STAFF_YOUNG_ROW, grade: "年長" },
+    { row: STAFF_FIRST_ROW, grade: "小1" },
+    { row: STAFF_SECOND_ROW, grade: "小2" },
+    { row: STAFF_THIRD_ROW, grade: "小3" },
+    { row: STAFF_FOURTH_ROW, grade: "小4" },
+    { row: STAFF_FIFTH_ROW, grade: "小5" },
+    { row: STAFF_SIXTH_ROW, grade: "小6" },
+  ];
+
+  // 教科別の授業可能チェック
+  const subjectCols = [
+    { col: STAFF_MAT_COL, subject: "算数", code: "M" },
+    { col: STAFF_JAP_COL, subject: "国語", code: "J" },
+    { col: STAFF_SCI_COL, subject: "理科", code: "R" },
+    { col: STAFF_SOC_COL, subject: "社会", code: "S" },
+  ];
+
+  // 各学年・教科の組み合わせをチェック
+  gradeRows.forEach((gradeInfo) => {
+    subjectCols.forEach((subjectInfo) => {
+      const cellValue = staffSheet
+        .getRange(gradeInfo.row, subjectInfo.col)
+        .getValue();
+
+      if (cellValue === WISH_TRUE) {
+        // 学年番号を取得（年長は0、小1は1、...、小6は6）
+        const gradeNumber =
+          gradeInfo.grade === "年長"
+            ? 0
+            : parseInt(gradeInfo.grade.replace("小", ""));
+
+        // 年長の場合はスキップ（講義コードに含まれないため）
+        if (gradeNumber > 0) {
+          const lessonCode = `${gradeNumber}${subjectInfo.code}`;
+          availableLessons.push(lessonCode);
+        }
+      }
+    });
+  });
+
+  return availableLessons;
+}
+
+/**
+ * Priorityシートの特定の講義コード列に表示名を追加
+ * @param {Sheet} prioritySheet - Priorityシート
+ * @param {string} lessonCode - 講義コード
+ * @param {string} displayName - 表示名
+ */
+function updatePrioritySheetForLesson(prioritySheet, lessonCode, displayName) {
+  const lastCol = prioritySheet.getLastColumn();
+
+  // 該当する講義コードの列を検索
+  for (let col = 1; col <= lastCol; col++) {
+    const lessonCodeCell = prioritySheet
+      .getRange(PRIORITY_LESSON_ROW, col)
+      .getValue();
+
+    if (lessonCodeCell === lessonCode) {
+      // 優先順位①～③をチェック
+      const firstTeacher = prioritySheet
+        .getRange(PRIORITY_FIRST_ROW, col)
+        .getValue();
+      const secondTeacher = prioritySheet
+        .getRange(PRIORITY_SECOND_ROW, col)
+        .getValue();
+      const thirdTeacher = prioritySheet
+        .getRange(PRIORITY_THIRD_ROW, col)
+        .getValue();
+
+      // 既に優先順位①～③に含まれている場合はスキップ
+      if (
+        firstTeacher === displayName ||
+        secondTeacher === displayName ||
+        thirdTeacher === displayName
+      ) {
+        Logger.log(
+          `講義${lessonCode}の優先順位①～③に「${displayName}」が既に含まれています`
+        );
+        return;
+      }
+
+      // 優先順位③の下から順番に空いているセルを探す
+      let targetRow = PRIORITY_THIRD_ROW + 1;
+      let added = false;
+
+      while (targetRow <= prioritySheet.getLastRow()) {
+        const cellValue = prioritySheet.getRange(targetRow, col).getValue();
+
+        if (!cellValue || cellValue === "") {
+          // 空いているセルに表示名を追加
+          prioritySheet.getRange(targetRow, col).setValue(displayName);
+          Logger.log(
+            `講義${lessonCode}の${targetRow}行目に「${displayName}」を追加しました`
+          );
+          added = true;
+          break;
+        }
+
+        targetRow++;
+      }
+
+      if (!added) {
+        // 最後の行の下に新しい行を追加
+        prioritySheet.getRange(targetRow, col).setValue(displayName);
+        Logger.log(
+          `講義${lessonCode}の${targetRow}行目に「${displayName}」を追加しました（新規行）`
+        );
+      }
+
+      break; // 該当する列が見つかったらループを抜ける
+    }
+  }
+}
+
+/**
  * 日次シート名かどうかを判定するヘルパー
  * 例: "7/30" のような日付形式のみtrue
  */
