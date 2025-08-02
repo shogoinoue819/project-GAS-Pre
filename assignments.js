@@ -37,12 +37,14 @@ function getCurrentDateLessons() {
   const lessons = extractLessonsFromTemplate(weekdayTemplateSheet);
 
   // 結果をログ出力
-  Logger.log(`取得した授業数: ${lessons.length}`);
+  Logger.log(`取得した講義数: ${lessons.length}`);
   lessons.forEach((lesson, index) => {
     Logger.log(
-      `授業${index + 1}: 行${lesson.row}, 列${lesson.col}, 「${
-        lesson.lessonName
-      }」`
+      `講義${index + 1}: ${lesson.period}コマ目, ${lesson.grade}${
+        lesson.subject
+      }, 講義コード「${lesson.lessonCode}」, 位置(${lesson.row}行, ${
+        lesson.col
+      }列)`
     );
   });
 
@@ -56,13 +58,13 @@ function getCurrentDateLessons() {
  */
 function getDayOfWeek(date) {
   const weekdays = [
-    WEEK_SUN, // 日曜日
-    WEEK_MON, // 月曜日
-    WEEK_TUE, // 火曜日
-    WEEK_WED, // 水曜日
-    WEEK_THU, // 木曜日
-    WEEK_FRI, // 金曜日
-    WEEK_SAT, // 土曜日
+    WEEK_MON, // 月曜日 (index 0)
+    WEEK_TUE, // 火曜日 (index 1)
+    WEEK_WED, // 水曜日 (index 2)
+    WEEK_THU, // 木曜日 (index 3)
+    WEEK_FRI, // 金曜日 (index 4)
+    WEEK_SAT, // 土曜日 (index 5)
+    WEEK_SUN, // 日曜日 (index 6)
   ];
   return weekdays[date.getDay()];
 }
@@ -76,9 +78,9 @@ function extractLessonsFromTemplate(templateSheet) {
   const lessons = [];
 
   // 定数で定義された範囲のみを走査
-  // 行：WEEK_LESSON1_ROW から WEEK_LESSON3_ROW
+  // 行：WEEK_PERIOD1_ROW から WEEK_PERIOD3_ROW
   // 列：WEEK_YOUNG_COL から WEEK_SIXTH_COL
-  for (let row = WEEK_LESSON1_ROW; row <= WEEK_LESSON3_ROW; row++) {
+  for (let row = WEEK_PERIOD1_ROW; row <= WEEK_PERIOD3_ROW; row++) {
     for (let col = WEEK_YOUNG_COL; col <= WEEK_SIXTH_COL; col++) {
       const cell = templateSheet.getRange(row, col);
       const cellValue = cell.getValue();
@@ -88,13 +90,25 @@ function extractLessonsFromTemplate(templateSheet) {
         continue;
       }
 
-      // 授業名として認識できる文字列かチェック
-      // 例：「１M 英語」「２M 数学」「３M 国語」など
+      // 講義コードとして認識できる文字列かチェック
+      // 例：「1M」「2J」「3R」「4S」など
       if (isLessonCell(cellValue)) {
+        // 講義情報を解析
+        const lessonInfo = parseLessonCode(cellValue);
+
+        // コマ数を行番号から判定（3行目=1コマ目、4行目=2コマ目、5行目=3コマ目）
+        const periodNumber = row - WEEK_PERIOD1_ROW + 1;
+
         lessons.push({
-          row: row,
-          col: col,
-          lessonName: cellValue,
+          lessonCode: cellValue, // 講義コード（例："1M"）
+          period: periodNumber, // コマ数（1, 2, 3）
+          grade: lessonInfo.grade, // 学年（例："小1"）
+          subject: lessonInfo.subject, // 教科（例："算数"）
+          gradeNumber: lessonInfo.gradeNumber, // 学年番号（1-6）
+          subjectCode: lessonInfo.subjectCode, // 教科コード（M/J/R/S）
+          row: row, // 行番号
+          col: col, // 列番号
+          assignedTeacher: null, // 担当講師の表示名（後で設定）
         });
       }
     }

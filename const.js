@@ -61,11 +61,11 @@ const DAILY_LESSON3_ROW = 5;
 // ===== 曜日シート 行列インデックス =====
 
 // 1コマ目行
-const WEEK_LESSON1_ROW = 3;
+const WEEK_PERIOD1_ROW = 3;
 // 2コマ目行
-const WEEK_LESSON2_ROW = 4;
+const WEEK_PERIOD2_ROW = 4;
 // 3コマ目行
-const WEEK_LESSON3_ROW = 5;
+const WEEK_PERIOD3_ROW = 5;
 
 // 年長列
 const WEEK_YOUNG_COL = 2;
