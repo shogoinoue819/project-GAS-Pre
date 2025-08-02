@@ -142,7 +142,6 @@ const PRIORITY_FIRST_ROW = 2;
 const PRIORITY_SECOND_ROW = 3;
 // 優先順位③行
 const PRIORITY_THIRD_ROW = 4;
-// 優先順位４行
 
 // ===== 文字列定数 =====
 

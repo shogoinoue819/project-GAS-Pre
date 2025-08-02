@@ -82,6 +82,8 @@ function reflectWish() {
         .setValue(result);
     });
   });
+
+  Logger.log("希望シフトの反映が完了しました");
 }
 
 /**
@@ -89,9 +91,30 @@ function reflectWish() {
  * 例: "7/30" のような日付形式のみtrue
  */
 function isDailySheetName(name) {
-  // 必要に応じて除外シート名を追加
-  const exclude = [MAIN, TEMPLATE_DAILY, TEMPLATE_STAFF];
+  // 除外シート名を定義
+  const exclude = [MAIN, TEMPLATE_DAILY, TEMPLATE_STAFF, PRIORITY];
+
+  // 除外シート名に含まれる場合はfalse
   if (exclude.includes(name)) return false;
+
+  // スタッフ個人シートを除外（メインシートからスタッフ名を取得して判定）
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const mainSheet = ss.getSheetByName(MAIN);
+  if (mainSheet) {
+    const staffNames = mainSheet
+      .getRange(
+        MAIN_STAFF_START_ROW,
+        MAIN_STAFF_NAME_COL,
+        MAIN_STAFF_END_ROW - MAIN_STAFF_START_ROW + 1,
+        1
+      )
+      .getValues()
+      .flat()
+      .filter((name) => name && name !== "");
+
+    if (staffNames.includes(name)) return false;
+  }
+
   // "M/d"形式（例: 7/30）かどうか
   return /^\d{1,2}\/\d{1,2}$/.test(name);
 }
