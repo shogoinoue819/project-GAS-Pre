@@ -37,14 +37,14 @@ function assignTeachersToLessons(lessons, dateSheet, prioritySheet) {
       `講義${index + 1} (${lesson.lessonCode}) の講師割り当てを開始...`
     );
 
-    // 優先順位リストを取得
+    // 優先順位リストを取得（Priorityシートの該当授業列の上から順番）
     const priorityList = getPriorityList(lesson.lessonCode, prioritySheet);
     if (!priorityList || priorityList.length === 0) {
       Logger.log(`講義${lesson.lessonCode}の優先順位リストが見つかりません`);
       return;
     }
 
-    // 優先順位上位から講師の希望を確認
+    // 優先順位リストの上から順番に講師の希望を確認
     let assigned = false;
     for (const teacherName of priorityList) {
       if (
@@ -62,30 +62,11 @@ function assignTeachersToLessons(lessons, dateSheet, prioritySheet) {
       }
     }
 
-    // 優先順位三番目までで割り当てられなかった場合の代替処理
+    // Priorityシートの該当授業列の一番下まで当たっても不可能だった場合
     if (!assigned) {
       Logger.log(
-        `講義${lesson.lessonCode}の優先順位講師での割り当てができませんでした。代替講師を探します...`
+        `講義${lesson.lessonCode}のPriorityシート記載講師での割り当てができませんでした（割り当て失敗）`
       );
-
-      const alternativeTeacher = findAlternativeTeacher(
-        lesson,
-        dateSheet,
-        prioritySheet,
-        assignedTeachers
-      );
-      if (alternativeTeacher) {
-        lesson.assignedTeacher = alternativeTeacher;
-        assignedTeachers[lesson.period].add(alternativeTeacher);
-
-        Logger.log(
-          `講義${lesson.lessonCode}に代替講師「${alternativeTeacher}」を割り当てました（${lesson.period}コマ目）`
-        );
-      } else {
-        Logger.log(
-          `講義${lesson.lessonCode}の講師割り当てができませんでした（代替講師も見つかりませんでした）`
-        );
-      }
     }
   });
 
@@ -370,51 +351,6 @@ function printAssignmentSummary(lessons) {
   });
 
   Logger.log("================================");
-}
-
-/**
- * 代替講師を探す（Priorityシートの優先順位リストに含まれていない講師のみ）
- * @param {Object} lesson - 講義オブジェクト
- * @param {Sheet} dateSheet - 日次シート
- * @param {Sheet} prioritySheet - 優先順位シート
- * @param {Object} assignedTeachers - 割り当て済み講師の管理オブジェクト
- * @returns {string|null} 代替講師名、見つからない場合はnull
- */
-function findAlternativeTeacher(
-  lesson,
-  dateSheet,
-  prioritySheet,
-  assignedTeachers
-) {
-  // 優先順位リストを取得（既にチェック済みの講師を除外するため）
-  const priorityList = getPriorityList(lesson.lessonCode, prioritySheet) || [];
-  const lastCol = dateSheet.getLastColumn();
-
-  // 日次シートの全講師をチェック
-  for (let col = DAILY_STAFF_START_COL; col <= lastCol; col++) {
-    const teacherName = dateSheet.getRange(DAILY_STAFF_ROW, col).getValue();
-
-    // 講師名が空の場合はスキップ
-    if (!teacherName || teacherName === "") {
-      continue;
-    }
-
-    // 優先順位リストに含まれている場合はスキップ（既にチェック済み）
-    if (priorityList.includes(teacherName)) {
-      continue;
-    }
-
-    // 勤務可能かチェック
-    if (isAvailable(teacherName, dateSheet, assignedTeachers, lesson.period)) {
-      Logger.log(
-        `代替講師候補「${teacherName}」が見つかりました（優先順位リスト外）`
-      );
-      return teacherName;
-    }
-  }
-
-  Logger.log(`講義${lesson.lessonCode}の代替講師が見つかりませんでした`);
-  return null;
 }
 
 /**
