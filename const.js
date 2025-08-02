@@ -130,7 +130,6 @@ const STAFF_ALGO_COL = 9;
 // プレ列
 const STAFF_PRE_COL = 10;
 
-
 // ===== 文字列定数 =====
 
 // 希望◯

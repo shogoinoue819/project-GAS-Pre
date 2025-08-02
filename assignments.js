@@ -56,13 +56,13 @@ function getCurrentDateLessons() {
  */
 function getDayOfWeek(date) {
   const weekdays = [
-    "日曜日",
-    "月曜日",
-    "火曜日",
-    "水曜日",
-    "木曜日",
-    "金曜日",
-    "土曜日",
+    WEEK_SUN, // 日曜日
+    WEEK_MON, // 月曜日
+    WEEK_TUE, // 火曜日
+    WEEK_WED, // 水曜日
+    WEEK_THU, // 木曜日
+    WEEK_FRI, // 金曜日
+    WEEK_SAT, // 土曜日
   ];
   return weekdays[date.getDay()];
 }
