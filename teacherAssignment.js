@@ -220,8 +220,23 @@ function fillLessonCodesToSheet(lessons, dateSheet) {
 
   // 割り当て済みの講義をフィルタリング
   const assignedLessons = lessons.filter((lesson) => lesson.assignedTeacher);
+  const unassignedLessons = lessons.filter((lesson) => !lesson.assignedTeacher);
 
   Logger.log(`割り当て済み講義数: ${assignedLessons.length}`);
+  Logger.log(`未割り当て講義数: ${unassignedLessons.length}`);
+
+  // 未割り当て講義の詳細をログ出力
+  if (unassignedLessons.length > 0) {
+    Logger.log("【未割り当て講義一覧】");
+    unassignedLessons.forEach((lesson, index) => {
+      Logger.log(
+        `${index + 1}. ${lesson.lessonCode} (${lesson.grade}${
+          lesson.subject
+        }) - ${lesson.period}コマ目`
+      );
+    });
+    Logger.log("※未割り当ての講義は日次シートに反映されません");
+  }
 
   assignedLessons.forEach((lesson) => {
     // 講師の列を検索

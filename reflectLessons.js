@@ -59,6 +59,7 @@ function reflectLessons() {
     Logger.log(
       "優先順位シート「Priority」が見つかりません。講師割り当てをスキップします。"
     );
+    showAssignmentResultUI(lessons, targetDateFormatted);
     return lessons;
   }
 
@@ -69,6 +70,9 @@ function reflectLessons() {
 
   // 結果サマリーを表示
   printAssignmentSummary(lessons);
+
+  // UIアラートで結果を表示
+  showAssignmentResultUI(lessons, targetDateFormatted);
 
   Logger.log("=== 処理完了 ===");
 
@@ -131,6 +135,7 @@ function getCurrentDateLessonsWithAssignment() {
     Logger.log(
       "優先順位シート「Priority」が見つかりません。講師割り当てをスキップします。"
     );
+    showAssignmentResultUI(lessons, currentDateFormatted);
     return lessons;
   }
 
@@ -142,9 +147,54 @@ function getCurrentDateLessonsWithAssignment() {
   // 結果サマリーを表示
   printAssignmentSummary(lessons);
 
+  // UIアラートで結果を表示
+  showAssignmentResultUI(lessons, currentDateFormatted);
+
   Logger.log("=== 処理完了 ===");
 
   return lessons;
+}
+
+/**
+ * 割り当て結果をUIアラートで表示
+ * @param {Array} lessons - 講義オブジェクトの配列
+ * @param {string} dateFormatted - 日付文字列
+ */
+function showAssignmentResultUI(lessons, dateFormatted) {
+  const ui = SpreadsheetApp.getUi();
+
+  // 割り当て済みと未割り当ての講義を分類
+  const assignedLessons = lessons.filter((lesson) => lesson.assignedTeacher);
+  const unassignedLessons = lessons.filter((lesson) => !lesson.assignedTeacher);
+
+  let message = `【${dateFormatted}の講師割り当て結果】\n\n`;
+
+  if (unassignedLessons.length === 0) {
+    // 全て割り当て完了
+    message += `✅ 全ての講義の割り当てが完了しました！\n\n`;
+    message += `総講義数: ${lessons.length}\n`;
+    message += `割り当て済み: ${assignedLessons.length}\n`;
+    message += `未割り当て: 0`;
+
+    ui.alert("講師割り当て完了", message, ui.ButtonSet.OK);
+  } else {
+    // 未割り当てがある場合
+    message += `⚠️ 一部の講義で割り当てができませんでした\n\n`;
+    message += `総講義数: ${lessons.length}\n`;
+    message += `割り当て済み: ${assignedLessons.length}\n`;
+    message += `未割り当て: ${unassignedLessons.length}\n\n`;
+    message += `【未割り当て講義一覧】\n`;
+
+    unassignedLessons.forEach((lesson, index) => {
+      message += `${index + 1}. ${dateFormatted} ${lesson.period}コマ目 ${
+        lesson.lessonCode
+      } (${lesson.grade}${lesson.subject})\n`;
+    });
+
+    message += `\n※未割り当ての講義は日次シートに反映されていません。`;
+
+    ui.alert("講師割り当て結果", message, ui.ButtonSet.OK);
+  }
 }
 
 /**
