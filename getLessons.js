@@ -132,6 +132,9 @@ function extractLessonsFromTemplate(templateSheet) {
         // コマ数を行番号から判定（3行目=1コマ目、4行目=2コマ目、5行目=3コマ目）
         const periodNumber = row - WEEK_PERIOD1_ROW + 1;
 
+        // セルのスタイル情報を取得
+        const cellStyle = extractCellStyle(cell);
+
         lessons.push({
           lessonCode: cellValue, // 講義コード（例："1M"）
           period: periodNumber, // コマ数（1, 2, 3）
@@ -142,12 +145,32 @@ function extractLessonsFromTemplate(templateSheet) {
           row: row, // 行番号
           col: col, // 列番号
           assignedTeacher: null, // 担当講師の表示名（後で設定）
+          // スタイル情報
+          style: cellStyle,
         });
       }
     }
   }
 
   return lessons;
+}
+
+/**
+ * セルのスタイル情報を抽出
+ * @param {Range} cell - セルオブジェクト
+ * @returns {Object} スタイル情報オブジェクト
+ */
+function extractCellStyle(cell) {
+  return {
+    backgroundColor: cell.getBackground(),
+    fontColor: cell.getFontColor(),
+    borders: cell.getBorder(),
+    fontFamily: cell.getFontFamily(),
+    fontSize: cell.getFontSize(),
+    fontBold: cell.getFontWeight() === "bold",
+    horizontalAlignment: cell.getHorizontalAlignment(),
+    verticalAlignment: cell.getVerticalAlignment(),
+  };
 }
 
 /**

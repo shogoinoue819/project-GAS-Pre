@@ -205,25 +205,112 @@ function findTeacherColumn(teacherName, dateSheet) {
 function fillLessonCodesToSheet(lessons, dateSheet) {
   Logger.log("日次シートへの反映を開始します...");
 
-  lessons.forEach((lesson) => {
-    if (lesson.assignedTeacher) {
-      // 講師の列を検索
-      const teacherCol = findTeacherColumn(lesson.assignedTeacher, dateSheet);
-      if (teacherCol !== -1) {
-        // コマ位置の行を計算
-        const lessonRow = WEEK_PERIOD1_ROW + lesson.period - 1;
+  // 割り当て済みの講義をフィルタリング
+  const assignedLessons = lessons.filter((lesson) => lesson.assignedTeacher);
 
-        // 講義コードをセット
-        dateSheet.getRange(lessonRow, teacherCol).setValue(lesson.lessonCode);
+  Logger.log(`割り当て済み講義数: ${assignedLessons.length}`);
 
-        Logger.log(
-          `講義コード「${lesson.lessonCode}」を${lesson.assignedTeacher}の${lesson.period}コマ目に設定しました`
-        );
+  assignedLessons.forEach((lesson) => {
+    // 講師の列を検索
+    const teacherCol = findTeacherColumn(lesson.assignedTeacher, dateSheet);
+    if (teacherCol !== -1) {
+      // コマ位置の行を計算
+      const lessonRow = WEEK_PERIOD1_ROW + lesson.period - 1;
+
+      // 対象セルを取得
+      const targetCell = dateSheet.getRange(lessonRow, teacherCol);
+
+      // 講義コードをセット
+      targetCell.setValue(lesson.lessonCode);
+
+      // スタイル情報を適用
+      if (lesson.style) {
+        applyCellStyle(targetCell, lesson.style);
       }
+
+      Logger.log(
+        `講義コード「${lesson.lessonCode}」を${lesson.assignedTeacher}の${lesson.period}コマ目に設定しました（スタイル付き）`
+      );
+    } else {
+      Logger.log(`講師「${lesson.assignedTeacher}」の列が見つかりません`);
     }
   });
 
   Logger.log("日次シートへの反映が完了しました");
+}
+
+/**
+ * セルにスタイル情報を適用
+ * @param {Range} cell - 対象セル
+ * @param {Object} style - スタイル情報オブジェクト
+ */
+function applyCellStyle(cell, style) {
+  try {
+    // 背景色を設定
+    if (style.backgroundColor) {
+      cell.setBackground(style.backgroundColor);
+    }
+
+    // 文字色を設定
+    if (style.fontColor) {
+      cell.setFontColor(style.fontColor);
+    }
+
+    // フォントファミリーを設定
+    if (style.fontFamily) {
+      cell.setFontFamily(style.fontFamily);
+    }
+
+    // フォントサイズを設定
+    if (style.fontSize) {
+      cell.setFontSize(style.fontSize);
+    }
+
+    // 太字設定
+    if (style.fontBold !== undefined) {
+      cell.setFontWeight(style.fontBold ? "bold" : "normal");
+    }
+
+    // 水平方向の配置を設定
+    if (style.horizontalAlignment) {
+      cell.setHorizontalAlignment(style.horizontalAlignment);
+    }
+
+    // 垂直方向の配置を設定
+    if (style.verticalAlignment) {
+      cell.setVerticalAlignment(style.verticalAlignment);
+    }
+
+    // ボーダーを設定
+    if (style.borders) {
+      cell.setBorder(
+        style.borders.top,
+        style.borders.right,
+        style.borders.bottom,
+        style.borders.left,
+        style.borders.vertical,
+        style.borders.horizontal
+      );
+    }
+  } catch (error) {
+    Logger.log(`スタイル適用エラー: ${error.message}`);
+  }
+}
+
+/**
+ * 複数セルに一括でスタイルを適用（将来的な拡張用）
+ * @param {Array} cells - セルオブジェクトの配列
+ * @param {Array} styles - スタイル情報オブジェクトの配列
+ */
+function applyCellStylesBatch(cells, styles) {
+  if (cells.length !== styles.length) {
+    Logger.log("セル数とスタイル数が一致しません");
+    return;
+  }
+
+  cells.forEach((cell, index) => {
+    applyCellStyle(cell, styles[index]);
+  });
 }
 
 /**
