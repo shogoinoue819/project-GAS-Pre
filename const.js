@@ -14,6 +14,8 @@ const WEEK_THU = "木";
 const WEEK_FRI = "金";
 const WEEK_SAT = "土";
 const WEEK_SUN = "日";
+// 優先順位シート名
+const PRIORITY = "Priority";
 
 // =====　メインシート 行列インデックス =====
 
@@ -129,6 +131,18 @@ const STAFF_SOC_COL = 8;
 const STAFF_ALGO_COL = 9;
 // プレ列
 const STAFF_PRE_COL = 10;
+
+// ===== 優先順位シート 行列インデックス =====
+
+// 講義コード行
+const PRIORITY_LESSON_ROW = 1;
+// 優先順位①行
+const PRIORITY_FIRST_ROW = 2;
+// 優先順位②行
+const PRIORITY_SECOND_ROW = 3;
+// 優先順位③行
+const PRIORITY_THIRD_ROW = 4;
+// 優先順位４行
 
 // ===== 文字列定数 =====
 
