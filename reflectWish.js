@@ -3,152 +3,165 @@
  * 希望がWISH_TRUEなら日次シートの希望行にWISH_TRUEを、そうでなければWISH_FALSEを記入する。
  */
 function reflectWish() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const mainSheet = ss.getSheetByName(MAIN);
-  if (!mainSheet) return;
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const mainSheet = ss.getSheetByName(MAIN);
+    if (!mainSheet) {
+      Logger.log("メインシートが見つかりません");
+      return;
+    }
 
-  // メインシートからスタッフ情報を取得（氏名と表示名）
-  const staffData = mainSheet
-    .getRange(
-      MAIN_STAFF_START_ROW,
-      MAIN_STAFF_NAME_COL,
-      MAIN_STAFF_END_ROW - MAIN_STAFF_START_ROW + 1,
-      2
-    )
-    .getValues();
+    // メインシートからスタッフ情報を取得（氏名と表示名）
+    const staffData = mainSheet
+      .getRange(
+        MAIN_STAFF_START_ROW,
+        MAIN_STAFF_NAME_COL,
+        MAIN_STAFF_END_ROW - MAIN_STAFF_START_ROW + 1,
+        2
+      )
+      .getValues();
 
-  // 氏名と表示名のマッピングを作成（空でないもののみ）
-  const staffMapping = staffData
-    .map((row, index) => ({
-      fullName: row[0], // 氏名（フルネーム）
-      displayName: row[1], // 表示名（苗字）
-      index: index,
-    }))
-    .filter((staff) => staff.fullName && staff.displayName); // 空でないもののみ
+    // 氏名と表示名のマッピングを作成（空でないもののみ）
+    const staffMapping = staffData
+      .map((row, index) => ({
+        fullName: row[0], // 氏名（フルネーム）
+        displayName: row[1], // 表示名（苗字）
+        index: index,
+      }))
+      .filter((staff) => staff.fullName && staff.displayName); // 空でないもののみ
 
-  // 全シート名を取得
-  const sheetNames = ss.getSheets().map((sheet) => sheet.getName());
+    // 全シート名を取得
+    const sheetNames = ss.getSheets().map((sheet) => sheet.getName());
 
-  // 日次シートのみを抽出（テンプレートやメイン、スタッフ個人シートを除外）
-  const dailySheetNames = sheetNames.filter((name) => isDailySheetName(name));
+    // 日次シートのみを抽出（テンプレートやメイン、スタッフ個人シートを除外）
+    const dailySheetNames = sheetNames.filter((name) => isDailySheetName(name));
 
-  dailySheetNames.forEach((dailySheetName) => {
-    const dailySheet = ss.getSheetByName(dailySheetName);
-    if (!dailySheet) return;
+    dailySheetNames.forEach((dailySheetName) => {
+      const dailySheet = ss.getSheetByName(dailySheetName);
+      if (!dailySheet) return;
 
-    // 日次シートから日付を取得
-    const dateValue = dailySheet
-      .getRange(DAILY_DATE_ROW, DAILY_DATE_COL)
-      .getValue();
-    if (!dateValue) return;
+      // 日次シートから日付を取得
+      const dateValue = dailySheet
+        .getRange(DAILY_DATE_ROW, DAILY_DATE_COL)
+        .getValue();
+      if (!dateValue) return;
 
-    // 各スタッフについて処理
-    staffMapping.forEach((staff) => {
-      const staffSheet = ss.getSheetByName(staff.fullName);
-      if (!staffSheet) return; // 個人シートがなければスキップ
+      // 各スタッフについて処理
+      staffMapping.forEach((staff) => {
+        const staffSheet = ss.getSheetByName(staff.fullName);
+        if (!staffSheet) return; // 個人シートがなければスキップ
 
-      // 個人シート内で該当日付の行を特定
-      const staffDates = staffSheet
-        .getRange(
-          STAFF_DATE_START_ROW,
-          STAFF_DATE_COL,
-          staffSheet.getLastRow() - STAFF_DATE_START_ROW + 1,
-          1
-        )
-        .getValues()
-        .flat();
+        // 個人シート内で該当日付の行を特定
+        const staffDates = staffSheet
+          .getRange(
+            STAFF_DATE_START_ROW,
+            STAFF_DATE_COL,
+            staffSheet.getLastRow() - STAFF_DATE_START_ROW + 1,
+            1
+          )
+          .getValues()
+          .flat();
 
-      // 日付が一致する行を探す
-      const dateRowOffset = staffDates.findIndex((d) =>
-        isSameDate(d, dateValue)
-      );
-      if (dateRowOffset === -1) {
-        // 一致する日付がなければWISH_FALSEを書き込む
+        // 日付が一致する行を探す
+        const dateRowOffset = staffDates.findIndex((d) =>
+          isSameDate(d, dateValue)
+        );
+        if (dateRowOffset === -1) {
+          // 一致する日付がなければWISH_FALSEを書き込む
+          dailySheet
+            .getRange(DAILY_WISH_ROW, DAILY_STAFF_START_COL + staff.index)
+            .setValue(WISH_FALSE);
+          return;
+        }
+
+        // 希望値を取得
+        const wishValue = staffSheet
+          .getRange(STAFF_DATE_START_ROW + dateRowOffset, STAFF_WISH_COL)
+          .getValue();
+
+        // 希望がWISH_TRUEならWISH_TRUE、そうでなければWISH_FALSE
+        const result = wishValue === WISH_TRUE ? WISH_TRUE : WISH_FALSE;
         dailySheet
           .getRange(DAILY_WISH_ROW, DAILY_STAFF_START_COL + staff.index)
-          .setValue(WISH_FALSE);
-        return;
-      }
-
-      // 希望値を取得
-      const wishValue = staffSheet
-        .getRange(STAFF_DATE_START_ROW + dateRowOffset, STAFF_WISH_COL)
-        .getValue();
-
-      // 希望がWISH_TRUEならWISH_TRUE、そうでなければWISH_FALSE
-      const result = wishValue === WISH_TRUE ? WISH_TRUE : WISH_FALSE;
-      dailySheet
-        .getRange(DAILY_WISH_ROW, DAILY_STAFF_START_COL + staff.index)
-        .setValue(result);
+          .setValue(result);
+      });
     });
-  });
 
-  Logger.log("希望シフトの反映が完了しました");
+    Logger.log("希望シフトの反映が完了しました");
+  } catch (error) {
+    Logger.log(`エラーが発生しました: ${error.message}`);
+    throw error;
+  }
 }
 
 /**
  * スタッフシートの授業可能欄から情報を取得し、Priorityシートに表示名を追加する
  */
 function updatePrioritySheetFromStaffSheets() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const mainSheet = ss.getSheetByName(MAIN);
-  const prioritySheet = ss.getSheetByName(PRIORITY);
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const mainSheet = ss.getSheetByName(MAIN);
+    const prioritySheet = ss.getSheetByName(PRIORITY);
 
-  if (!mainSheet || !prioritySheet) {
-    Logger.log("メインシートまたはPriorityシートが見つかりません");
-    return;
-  }
-
-  // メインシートからスタッフ情報を取得（氏名と表示名）
-  const staffData = mainSheet
-    .getRange(
-      MAIN_STAFF_START_ROW,
-      MAIN_STAFF_NAME_COL,
-      MAIN_STAFF_END_ROW - MAIN_STAFF_START_ROW + 1,
-      2
-    )
-    .getValues();
-
-  // 氏名と表示名のマッピングを作成（空でないもののみ）
-  const staffMapping = staffData
-    .map((row) => ({
-      fullName: row[0], // 氏名（フルネーム）
-      displayName: row[1], // 表示名（苗字）
-    }))
-    .filter((staff) => staff.fullName && staff.displayName);
-
-  Logger.log("Priorityシートの更新を開始します...");
-
-  // 各スタッフについて処理
-  staffMapping.forEach((staff) => {
-    const staffSheet = ss.getSheetByName(staff.fullName);
-    if (!staffSheet) {
-      Logger.log(`スタッフシート「${staff.fullName}」が見つかりません`);
+    if (!mainSheet || !prioritySheet) {
+      Logger.log("メインシートまたはPriorityシートが見つかりません");
       return;
     }
 
-    // スタッフシートから授業可能な学年・教科を取得
-    const availableLessons = getAvailableLessonsFromStaffSheet(staffSheet);
+    // メインシートからスタッフ情報を取得（氏名と表示名）
+    const staffData = mainSheet
+      .getRange(
+        MAIN_STAFF_START_ROW,
+        MAIN_STAFF_NAME_COL,
+        MAIN_STAFF_END_ROW - MAIN_STAFF_START_ROW + 1,
+        2
+      )
+      .getValues();
 
-    if (availableLessons.length > 0) {
-      Logger.log(
-        `スタッフ「${
-          staff.displayName
-        }」の授業可能科目: ${availableLessons.join(", ")}`
-      );
+    // 氏名と表示名のマッピングを作成（空でないもののみ）
+    const staffMapping = staffData
+      .map((row) => ({
+        fullName: row[0], // 氏名（フルネーム）
+        displayName: row[1], // 表示名（苗字）
+      }))
+      .filter((staff) => staff.fullName && staff.displayName);
 
-      // 各授業コードについてPriorityシートを更新
-      availableLessons.forEach((lessonCode) => {
-        updatePrioritySheetForLesson(
-          prioritySheet,
-          lessonCode,
-          staff.displayName
+    Logger.log("Priorityシートの更新を開始します...");
+
+    // 各スタッフについて処理
+    staffMapping.forEach((staff) => {
+      const staffSheet = ss.getSheetByName(staff.fullName);
+      if (!staffSheet) {
+        Logger.log(`スタッフシート「${staff.fullName}」が見つかりません`);
+        return;
+      }
+
+      // スタッフシートから授業可能な学年・教科を取得
+      const availableLessons = getAvailableLessonsFromStaffSheet(staffSheet);
+
+      if (availableLessons.length > 0) {
+        Logger.log(
+          `スタッフ「${
+            staff.displayName
+          }」の授業可能科目: ${availableLessons.join(", ")}`
         );
-      });
-    }
-  });
 
-  Logger.log("Priorityシートの更新が完了しました");
+        // 各授業コードについてPriorityシートを更新
+        availableLessons.forEach((lessonCode) => {
+          updatePrioritySheetForLesson(
+            prioritySheet,
+            lessonCode,
+            staff.displayName
+          );
+        });
+      }
+    });
+
+    Logger.log("Priorityシートの更新が完了しました");
+  } catch (error) {
+    Logger.log(`エラーが発生しました: ${error.message}`);
+    throw error;
+  }
 }
 
 /**

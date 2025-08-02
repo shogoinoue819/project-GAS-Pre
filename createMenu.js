@@ -11,9 +11,8 @@ function createCustomMenu() {
     .addItem("希望シフト反映", "reflectWish")
     .addItem("教科担当更新", "updatePrioritySheetFromStaffSheets")
     .addSeparator()
-    .addItem("講師割り当て実行", "getCurrentDateLessonsWithAssignment")
+    .addItem("全日次シート割り当て", "reflectAllDailySheets")
     .addItem("講義情報取得テスト", "testGetLessons")
-    .addItem("講義反映実行", "reflectLessons")
     .addToUi();
 }
 

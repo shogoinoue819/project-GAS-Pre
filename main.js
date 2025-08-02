@@ -8,71 +8,78 @@
  * @returns {Array} 講義オブジェクトの配列
  */
 function reflectLessons() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  // 特定の日付を指定
-  const targetDate = new Date("2024-08-04");
-  const targetDateFormatted = Utilities.formatDate(
-    targetDate,
-    Session.getScriptTimeZone(),
-    "M/d"
-  );
-
-  Logger.log("=== 講義取得・講師割り当て処理開始 ===");
-
-  // 指定した日付シートを取得
-  const targetDateSheet = ss.getSheetByName(targetDateFormatted);
-  if (!targetDateSheet) {
-    throw new Error(
-      `指定した日付シート「${targetDateFormatted}」が見つかりません。`
+    // 特定の日付を指定
+    const targetDate = new Date("2024-08-04");
+    const targetDateFormatted = Utilities.formatDate(
+      targetDate,
+      Session.getScriptTimeZone(),
+      "M/d"
     );
-  }
 
-  // 曜日を判定
-  const dayOfWeek = getDayOfWeek(targetDate);
-  Logger.log(`指定した日付: ${targetDateFormatted}, 曜日: ${dayOfWeek}`);
+    Logger.log("=== 講義取得・講師割り当て処理開始 ===");
 
-  // 曜日テンプレートシートを取得
-  const weekdayTemplateSheet = ss.getSheetByName(dayOfWeek);
-  if (!weekdayTemplateSheet) {
-    throw new Error(`曜日テンプレートシート「${dayOfWeek}」が見つかりません。`);
-  }
+    // 指定した日付シートを取得
+    const targetDateSheet = ss.getSheetByName(targetDateFormatted);
+    if (!targetDateSheet) {
+      throw new Error(
+        `指定した日付シート「${targetDateFormatted}」が見つかりません。`
+      );
+    }
 
-  // 講義情報を取得
-  const lessons = extractLessonsFromTemplate(weekdayTemplateSheet);
+    // 曜日を判定
+    const dayOfWeek = getDayOfWeek(targetDate);
+    Logger.log(`指定した日付: ${targetDateFormatted}, 曜日: ${dayOfWeek}`);
 
-  // 講義取得結果をログ出力
-  Logger.log(`取得した講義数: ${lessons.length}`);
-  lessons.forEach((lesson, index) => {
-    Logger.log(
-      `講義${index + 1}: ${lesson.period}コマ目, ${lesson.grade}${
-        lesson.subject
-      }, 講義コード「${lesson.lessonCode}」, 位置(${lesson.row}行, ${
-        lesson.col
-      }列)`
-    );
-  });
+    // 曜日テンプレートシートを取得
+    const weekdayTemplateSheet = ss.getSheetByName(dayOfWeek);
+    if (!weekdayTemplateSheet) {
+      throw new Error(
+        `曜日テンプレートシート「${dayOfWeek}」が見つかりません。`
+      );
+    }
 
-  // 優先順位シートを取得
-  const prioritySheet = ss.getSheetByName(PRIORITY);
-  if (!prioritySheet) {
-    Logger.log(
-      "優先順位シート「Priority」が見つかりません。講師割り当てをスキップします。"
-    );
+    // 講義情報を取得
+    const lessons = extractLessonsFromTemplate(weekdayTemplateSheet);
+
+    // 講義取得結果をログ出力
+    Logger.log(`取得した講義数: ${lessons.length}`);
+    lessons.forEach((lesson, index) => {
+      Logger.log(
+        `講義${index + 1}: ${lesson.period}コマ目, ${lesson.grade}${
+          lesson.subject
+        }, 講義コード「${lesson.lessonCode}」, 位置(${lesson.row}行, ${
+          lesson.col
+        }列)`
+      );
+    });
+
+    // 優先順位シートを取得
+    const prioritySheet = ss.getSheetByName(PRIORITY);
+    if (!prioritySheet) {
+      Logger.log(
+        "優先順位シート「Priority」が見つかりません。講師割り当てをスキップします。"
+      );
+      return lessons;
+    }
+
+    Logger.log("=== 講師割り当て処理開始 ===");
+
+    // 講師割り当てを実行
+    assignTeachersToLessons(lessons, targetDateSheet, prioritySheet);
+
+    // 結果サマリーを表示
+    printAssignmentSummary(lessons);
+
+    Logger.log("=== 処理完了 ===");
+
     return lessons;
+  } catch (error) {
+    Logger.log(`エラーが発生しました: ${error.message}`);
+    throw error;
   }
-
-  Logger.log("=== 講師割り当て処理開始 ===");
-
-  // 講師割り当てを実行
-  assignTeachersToLessons(lessons, targetDateSheet, prioritySheet);
-
-  // 結果サマリーを表示
-  printAssignmentSummary(lessons);
-
-  Logger.log("=== 処理完了 ===");
-
-  return lessons;
 }
 
 /**

@@ -10,70 +10,75 @@
  * @param {Sheet} prioritySheet - 優先順位シート
  */
 function assignTeachersToLessons(lessons, dateSheet, prioritySheet) {
-  Logger.log("講師割り当て処理を開始します...");
+  try {
+    Logger.log("講師割り当て処理を開始します...");
 
-  // 割り当て済み講師の管理（コマ別）
-  const assignedTeachers = {
-    1: new Set(), // 1コマ目に割り当て済みの講師
-    2: new Set(), // 2コマ目に割り当て済みの講師
-    3: new Set(), // 3コマ目に割り当て済みの講師
-  };
+    // 割り当て済み講師の管理（コマ別）
+    const assignedTeachers = {
+      1: new Set(), // 1コマ目に割り当て済みの講師
+      2: new Set(), // 2コマ目に割り当て済みの講師
+      3: new Set(), // 3コマ目に割り当て済みの講師
+    };
 
-  // 授業の優先度を考慮してソート
-  const sortedLessons = sortLessonsByPriority(lessons);
+    // 授業の優先度を考慮してソート
+    const sortedLessons = sortLessonsByPriority(lessons);
 
-  Logger.log("授業の優先度順でソートしました:");
-  sortedLessons.forEach((lesson, index) => {
-    Logger.log(
-      `${index + 1}. ${lesson.lessonCode} (${lesson.grade}${
-        lesson.subject
-      }) - 優先度: ${calculateLessonPriority(lesson)}`
-    );
-  });
-
-  // 各講義に対して講師を割り当て
-  sortedLessons.forEach((lesson, index) => {
-    Logger.log(
-      `講義${index + 1} (${lesson.lessonCode}) の講師割り当てを開始...`
-    );
-
-    // 優先順位リストを取得（Priorityシートの該当授業列の上から順番）
-    const priorityList = getPriorityList(lesson.lessonCode, prioritySheet);
-    if (!priorityList || priorityList.length === 0) {
-      Logger.log(`講義${lesson.lessonCode}の優先順位リストが見つかりません`);
-      return;
-    }
-
-    // 優先順位リストの上から順番に講師の希望を確認
-    let assigned = false;
-    for (const teacherName of priorityList) {
-      if (
-        isAvailable(teacherName, dateSheet, assignedTeachers, lesson.period)
-      ) {
-        lesson.assignedTeacher = teacherName;
-        // 割り当て済み講師リストに追加
-        assignedTeachers[lesson.period].add(teacherName);
-
-        Logger.log(
-          `講義${lesson.lessonCode}に講師「${teacherName}」を割り当てました（${lesson.period}コマ目）`
-        );
-        assigned = true;
-        break;
-      }
-    }
-
-    // Priorityシートの該当授業列の一番下まで当たっても不可能だった場合
-    if (!assigned) {
+    Logger.log("授業の優先度順でソートしました:");
+    sortedLessons.forEach((lesson, index) => {
       Logger.log(
-        `講義${lesson.lessonCode}のPriorityシート記載講師での割り当てができませんでした（割り当て失敗）`
+        `${index + 1}. ${lesson.lessonCode} (${lesson.grade}${
+          lesson.subject
+        }) - 優先度: ${calculateLessonPriority(lesson)}`
       );
-    }
-  });
+    });
 
-  // 割り当て結果を日次シートに反映
-  fillLessonCodesToSheet(sortedLessons, dateSheet);
+    // 各講義に対して講師を割り当て
+    sortedLessons.forEach((lesson, index) => {
+      Logger.log(
+        `講義${index + 1} (${lesson.lessonCode}) の講師割り当てを開始...`
+      );
 
-  Logger.log("講師割り当て処理が完了しました");
+      // 優先順位リストを取得（Priorityシートの該当授業列の上から順番）
+      const priorityList = getPriorityList(lesson.lessonCode, prioritySheet);
+      if (!priorityList || priorityList.length === 0) {
+        Logger.log(`講義${lesson.lessonCode}の優先順位リストが見つかりません`);
+        return;
+      }
+
+      // 優先順位リストの上から順番に講師の希望を確認
+      let assigned = false;
+      for (const teacherName of priorityList) {
+        if (
+          isAvailable(teacherName, dateSheet, assignedTeachers, lesson.period)
+        ) {
+          lesson.assignedTeacher = teacherName;
+          // 割り当て済み講師リストに追加
+          assignedTeachers[lesson.period].add(teacherName);
+
+          Logger.log(
+            `講義${lesson.lessonCode}に講師「${teacherName}」を割り当てました（${lesson.period}コマ目）`
+          );
+          assigned = true;
+          break;
+        }
+      }
+
+      // Priorityシートの該当授業列の一番下まで当たっても不可能だった場合
+      if (!assigned) {
+        Logger.log(
+          `講義${lesson.lessonCode}のPriorityシート記載講師での割り当てができませんでした（割り当て失敗）`
+        );
+      }
+    });
+
+    // 割り当て結果を日次シートに反映
+    fillLessonCodesToSheet(sortedLessons, dateSheet);
+
+    Logger.log("講師割り当て処理が完了しました");
+  } catch (error) {
+    Logger.log(`講師割り当て処理でエラーが発生しました: ${error.message}`);
+    throw error;
+  }
 }
 
 /**
