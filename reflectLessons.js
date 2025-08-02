@@ -1,12 +1,12 @@
 /**
- * メイン実行関数
- * 全日次シートで講義取得から講師割り当てまで一括実行
+ * 講師割り当て機能
+ * 全日程の講師割り当てを実行
  */
 
 /**
- * 全日次シートで講師割り当てを実行
+ * 全日次シートで講師割り当てを一括実行
  */
-function reflectAllDailySheets() {
+function reflectLessons() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
 
