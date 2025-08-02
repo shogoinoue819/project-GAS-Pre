@@ -143,6 +143,48 @@ const PRIORITY_SECOND_ROW = 3;
 // 優先順位③行
 const PRIORITY_THIRD_ROW = 4;
 
+// ===== 講義コード定義 =====
+
+// 講義コードの定義（24通り）
+// 形式: 学年(1-6) + 教科(M/J/R/S)
+const LESSON_CODES = {
+  // 小1
+  "1M": { grade: "小1", subject: "算数", gradeNumber: 1, subjectCode: "M" },
+  "1J": { grade: "小1", subject: "国語", gradeNumber: 1, subjectCode: "J" },
+  "1R": { grade: "小1", subject: "理科", gradeNumber: 1, subjectCode: "R" },
+  "1S": { grade: "小1", subject: "社会", gradeNumber: 1, subjectCode: "S" },
+
+  // 小2
+  "2M": { grade: "小2", subject: "算数", gradeNumber: 2, subjectCode: "M" },
+  "2J": { grade: "小2", subject: "国語", gradeNumber: 2, subjectCode: "J" },
+  "2R": { grade: "小2", subject: "理科", gradeNumber: 2, subjectCode: "R" },
+  "2S": { grade: "小2", subject: "社会", gradeNumber: 2, subjectCode: "S" },
+
+  // 小3
+  "3M": { grade: "小3", subject: "算数", gradeNumber: 3, subjectCode: "M" },
+  "3J": { grade: "小3", subject: "国語", gradeNumber: 3, subjectCode: "J" },
+  "3R": { grade: "小3", subject: "理科", gradeNumber: 3, subjectCode: "R" },
+  "3S": { grade: "小3", subject: "社会", gradeNumber: 3, subjectCode: "S" },
+
+  // 小4
+  "4M": { grade: "小4", subject: "算数", gradeNumber: 4, subjectCode: "M" },
+  "4J": { grade: "小4", subject: "国語", gradeNumber: 4, subjectCode: "J" },
+  "4R": { grade: "小4", subject: "理科", gradeNumber: 4, subjectCode: "R" },
+  "4S": { grade: "小4", subject: "社会", gradeNumber: 4, subjectCode: "S" },
+
+  // 小5
+  "5M": { grade: "小5", subject: "算数", gradeNumber: 5, subjectCode: "M" },
+  "5J": { grade: "小5", subject: "国語", gradeNumber: 5, subjectCode: "J" },
+  "5R": { grade: "小5", subject: "理科", gradeNumber: 5, subjectCode: "R" },
+  "5S": { grade: "小5", subject: "社会", gradeNumber: 5, subjectCode: "S" },
+
+  // 小6
+  "6M": { grade: "小6", subject: "算数", gradeNumber: 6, subjectCode: "M" },
+  "6J": { grade: "小6", subject: "国語", gradeNumber: 6, subjectCode: "J" },
+  "6R": { grade: "小6", subject: "理科", gradeNumber: 6, subjectCode: "R" },
+  "6S": { grade: "小6", subject: "社会", gradeNumber: 6, subjectCode: "S" },
+};
+
 // ===== 文字列定数 =====
 
 // 希望◯
