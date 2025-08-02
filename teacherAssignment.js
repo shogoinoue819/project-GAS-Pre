@@ -204,6 +204,9 @@ function findTeacherColumn(teacherName, dateSheet) {
 function fillLessonCodesToSheet(lessons, dateSheet) {
   Logger.log("日次シートへの反映を開始します...");
 
+  // コマ部分を一旦リセット
+  resetLessonArea(dateSheet);
+
   // 割り当て済みの講義をフィルタリング
   const assignedLessons = lessons.filter((lesson) => lesson.assignedTeacher);
   const unassignedLessons = lessons.filter((lesson) => !lesson.assignedTeacher);
@@ -251,6 +254,47 @@ function fillLessonCodesToSheet(lessons, dateSheet) {
   });
 
   Logger.log("日次シートへの反映が完了しました");
+}
+
+/**
+ * 日次シートのコマ部分をリセット
+ * @param {Sheet} dateSheet - 日次シート
+ */
+function resetLessonArea(dateSheet) {
+  Logger.log("コマ部分のリセットを開始します...");
+
+  // スタッフの列数を取得
+  const lastCol = dateSheet.getLastColumn();
+
+  // コマ部分の範囲を定義（1行目と1列目は除外）
+  // 行：DAILY_LESSON1_ROW から DAILY_LESSON3_ROW（3行目から5行目）
+  // 列：DAILY_STAFF_START_COL から lastCol（2列目から最後まで）
+  const startRow = DAILY_LESSON1_ROW;
+  const endRow = DAILY_LESSON3_ROW;
+  const startCol = DAILY_STAFF_START_COL;
+  const endCol = lastCol;
+
+  // コマ部分の範囲を取得
+  const lessonRange = dateSheet.getRange(
+    startRow,
+    startCol,
+    endRow - startRow + 1,
+    endCol - startCol + 1
+  );
+
+  // 内容とスタイルをクリア
+  lessonRange.clearContent();
+  lessonRange.setBackground(null);
+  lessonRange.setFontColor(null);
+  lessonRange.setFontWeight("normal");
+  lessonRange.setFontSize(10);
+  lessonRange.setFontFamily("Arial");
+  lessonRange.setHorizontalAlignment("center");
+  lessonRange.setVerticalAlignment("middle");
+
+  Logger.log(
+    `コマ部分をリセットしました（${startRow}行目-${endRow}行目、${startCol}列目-${endCol}列目）`
+  );
 }
 
 /**

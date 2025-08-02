@@ -10,13 +10,13 @@
  */
 function getDayOfWeek(date) {
   const weekdays = [
-    WEEK_MON, // 月曜日 (index 0)
-    WEEK_TUE, // 火曜日 (index 1)
-    WEEK_WED, // 水曜日 (index 2)
-    WEEK_THU, // 木曜日 (index 3)
-    WEEK_FRI, // 金曜日 (index 4)
-    WEEK_SAT, // 土曜日 (index 5)
-    WEEK_SUN, // 日曜日 (index 6)
+    WEEK_SUN, // 日曜日 (index 0)
+    WEEK_MON, // 月曜日 (index 1)
+    WEEK_TUE, // 火曜日 (index 2)
+    WEEK_WED, // 水曜日 (index 3)
+    WEEK_THU, // 木曜日 (index 4)
+    WEEK_FRI, // 金曜日 (index 5)
+    WEEK_SAT, // 土曜日 (index 6)
   ];
   return weekdays[date.getDay()];
 }
