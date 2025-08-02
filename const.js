@@ -6,6 +6,14 @@ const MAIN = "Main";
 const TEMPLATE_DAILY = "Template_Daily";
 // スタッフテンプレートシート名
 const TEMPLATE_STAFF = "Template_Staff";
+// 曜日シート名
+const WEEK_MON = "月";
+const WEEK_TUE = "火";
+const WEEK_WED = "水";
+const WEEK_THU = "木";
+const WEEK_FRI = "金";
+const WEEK_SAT = "土";
+const WEEK_SUN = "日";
 
 // =====　メインシート 行列インデックス =====
 
@@ -121,6 +129,7 @@ const STAFF_SOC_COL = 8;
 const STAFF_ALGO_COL = 9;
 // プレ列
 const STAFF_PRE_COL = 10;
+
 
 // ===== 文字列定数 =====
 
