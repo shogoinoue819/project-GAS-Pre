@@ -27,9 +27,125 @@
 
 ## セットアップ
 
-### 1. 環境 ID の設定
+### 1. 必要なファイルの作成
 
-`switch-env.js`ファイルの`ENV_CONFIG`に環境別の ID を設定してください：
+このプロジェクトを clone した後、以下のファイルを手動で作成する必要があります：
+
+#### **switch-env.js の作成**
+
+```javascript
+#!/usr/bin/env node
+
+const fs = require("fs");
+const path = require("path");
+
+const args = process.argv.slice(2);
+const environment = args[0] || "test";
+
+const ENV_CONFIG = {
+  production: {
+    SPREADSHEET_ID: "自分の本番用スプレッドシートID",
+    FOLDER_ID: "自分の本番用フォルダID",
+    PDF_FOLDER_ID: "自分の本番用PDFフォルダID",
+  },
+  test: {
+    SPREADSHEET_ID: "自分のテスト用スプレッドシートID",
+    FOLDER_ID: "自分のテスト用フォルダID",
+    PDF_FOLDER_ID: "自分のテスト用PDFフォルダID",
+  },
+};
+
+// env-constants.jsのパス
+const envConstantsPath = path.join(__dirname, "const-env.js");
+
+// ファイル内容を読み込み
+function readEnvConstants() {
+  try {
+    return fs.readFileSync(envConstantsPath, "utf8");
+  } catch (error) {
+    console.error(
+      "エラー: const-env.js を読み込めませんでした:",
+      error.message
+    );
+    process.exit(1);
+  }
+}
+
+// 環境に応じてIDを置換
+function replaceIds(content, config) {
+  content = content.replace(
+    /const SPREADSHEET_ID = "[^"]*";/,
+    `const SPREADSHEET_ID = "${config.SPREADSHEET_ID}";`
+  );
+  content = content.replace(
+    /const FOLDER_ID = "[^"]*";/,
+    `const FOLDER_ID = "${config.FOLDER_ID}";`
+  );
+  content = content.replace(
+    /const PDF_FOLDER_ID = "[^"]*";/,
+    `const PDF_FOLDER_ID = "${config.PDF_FOLDER_ID}";`
+  );
+  return content;
+}
+
+// ファイルに書き込み
+function writeEnvConstants(content) {
+  try {
+    fs.writeFileSync(envConstantsPath, content, "utf8");
+    console.log("const-env.js を更新しました");
+  } catch (error) {
+    console.error(
+      "エラー: const-env.js の書き込みに失敗しました:",
+      error.message
+    );
+    process.exit(1);
+  }
+}
+
+// メイン処理
+function main() {
+  if (!ENV_CONFIG[environment]) {
+    console.error(`エラー: 不明な環境 "${environment}"`);
+    console.log("使用可能な環境: production, test");
+    process.exit(1);
+  }
+
+  const config = ENV_CONFIG[environment];
+  console.log(`環境設定:`, config);
+
+  let content = readEnvConstants();
+  content = replaceIds(content, config);
+  writeEnvConstants(content);
+
+  console.log(`${environment}環境への切り替えが完了しました`);
+}
+
+main();
+```
+
+#### **clasp 設定ファイルの作成**
+
+**.clasp.json（本番環境）**:
+
+```json
+{
+  "scriptId": "自分の本番用scriptId",
+  "rootDir": "./"
+}
+```
+
+**.clasp-test.json（テスト環境）**:
+
+```json
+{
+  "scriptId": "自分のテスト用scriptId",
+  "rootDir": "./"
+}
+```
+
+### 2. 環境 ID の設定
+
+作成した`switch-env.js`ファイルの`ENV_CONFIG`に環境別の ID を設定してください：
 
 ```javascript
 const ENV_CONFIG = {
@@ -46,7 +162,7 @@ const ENV_CONFIG = {
 };
 ```
 
-### 2. clasp の認証
+### 3. clasp の認証
 
 ```bash
 # claspにログイン
