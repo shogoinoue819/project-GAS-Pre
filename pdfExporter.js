@@ -48,8 +48,14 @@ function exportAllDailySheetsAsPDF() {
     let errorCount = 0;
 
     // 各日次シートをPDF化
-    dailySheetNames.forEach((sheetName) => {
+    dailySheetNames.forEach((sheetName, index) => {
       try {
+        // レート制限対策：シート間でディレイを入れる
+        if (index > 0) {
+          Logger.log("レート制限対策のため2秒待機中...");
+          Utilities.sleep(2000); // 2秒待機
+        }
+
         const sheet = getSheetSafely(ss, sheetName);
         if (!sheet) {
           Logger.log(`シート "${sheetName}" が見つかりません`);
@@ -61,8 +67,8 @@ function exportAllDailySheetsAsPDF() {
 
         Logger.log(`シート "${sheetName}" をPDF化中...`);
 
-        // PDFをエクスポート
-        const pdfBlob = exportSheetAsPDF(sheet, fileName);
+        // PDFをエクスポート（リトライ機能付き）
+        const pdfBlob = exportSheetAsPDFWithRetry(sheet, fileName);
 
         // Google Driveに保存
         const file = folder.createFile(pdfBlob);
@@ -87,6 +93,40 @@ function exportAllDailySheetsAsPDF() {
 }
 
 /**
+ * リトライ機能付きでシートをPDFにエクスポート
+ * @param {Sheet} sheet - エクスポート対象のシート
+ * @param {string} fileName - ファイル名
+ * @param {number} maxRetries - 最大リトライ回数（デフォルト: 3）
+ * @returns {Blob} PDFファイルのBlobオブジェクト
+ */
+function exportSheetAsPDFWithRetry(sheet, fileName, maxRetries = 3) {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return exportSheetAsPDF(sheet, fileName);
+    } catch (error) {
+      lastError = error;
+
+      // 429エラー（レート制限）の場合は待機してリトライ
+      if (error.message.includes("429") && attempt < maxRetries) {
+        const waitTime = attempt * 5000; // 5秒、10秒、15秒と増加
+        Logger.log(
+          `レート制限エラー (429) が発生しました。${waitTime}秒待機してリトライします... (試行 ${attempt}/${maxRetries})`
+        );
+        Utilities.sleep(waitTime);
+        continue;
+      }
+
+      // その他のエラーまたは最後の試行の場合はエラーを投げる
+      throw error;
+    }
+  }
+
+  throw lastError;
+}
+
+/**
  * 指定されたシートをPDFにエクスポートする
  * @param {Sheet} sheet - エクスポート対象のシート
  * @param {string} fileName - ファイル名
@@ -107,6 +147,7 @@ function exportSheetAsPDF(sheet, fileName) {
       headers: {
         Authorization: `Bearer ${ScriptApp.getOAuthToken()}`,
       },
+      muteHttpExceptions: true, // エラーレスポンスも取得
     });
 
     if (response.getResponseCode() !== 200) {
@@ -171,8 +212,8 @@ function exportSpecificDailySheetAsPDF(dateString) {
 
     Logger.log(`シート "${dateString}" をPDF化中...`);
 
-    // PDFをエクスポート
-    const pdfBlob = exportSheetAsPDF(sheet, fileName);
+    // PDFをエクスポート（リトライ機能付き）
+    const pdfBlob = exportSheetAsPDFWithRetry(sheet, fileName);
 
     // Google Driveに保存
     const file = folder.createFile(pdfBlob);
