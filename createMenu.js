@@ -14,16 +14,7 @@ function createCustomMenu() {
     .addSeparator()
     .addItem("全日程授業反映", "reflectLessons")
     .addSeparator()
-    .addSubMenu(
-      ui
-        .createMenu("PDFエクスポート")
-        .addItem("全日次シートをPDF化（個別）", "exportAllDailySheetsAsPDF")
-        .addItem(
-          "全日次シートをPDF化（統合）",
-          "exportAllDailySheetsAsCombinedPDF"
-        )
-        .addItem("環境変数チェック", "checkEnvironmentVariables")
-    )
+    .addItem("全日次シートをPDF化", "exportAllDailySheetsAsCombinedPDF")
     .addToUi();
 }
 
