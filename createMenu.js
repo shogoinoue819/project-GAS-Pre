@@ -17,7 +17,11 @@ function createCustomMenu() {
     .addSubMenu(
       ui
         .createMenu("PDFエクスポート")
-        .addItem("全日次シートをPDF化", "exportAllDailySheetsAsPDF")
+        .addItem("全日次シートをPDF化（個別）", "exportAllDailySheetsAsPDF")
+        .addItem(
+          "全日次シートをPDF化（統合）",
+          "exportAllDailySheetsAsCombinedPDF"
+        )
         .addItem("環境変数チェック", "checkEnvironmentVariables")
     )
     .addToUi();
