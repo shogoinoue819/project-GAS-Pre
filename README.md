@@ -128,13 +128,13 @@ exportSpecificDailySheetAsPDF("2025-01-15");
 
 ## セキュリティ
 
-| ファイル           | GitHub 公開 | 理由                                  |
-| ------------------ | ----------- | ------------------------------------- |
-| `switch-env.js`    | ❌          | ID が含まれるため非公開               |
-| `const-env.js`     | ❌          | ID が含まれるため非公開               |
-| `const.js`         | ✅          | アプリケーション定数のみ              |
-| `.clasp.json`      | ❌          | 本番環境の scriptId が含まれる        |
-| `.clasp-test.json` | ❌          | テスト環境の scriptId が含まれる      |
+| ファイル           | GitHub 公開 | 理由                             |
+| ------------------ | ----------- | -------------------------------- |
+| `switch-env.js`    | ❌          | ID が含まれるため非公開          |
+| `const-env.js`     | ❌          | ID が含まれるため非公開          |
+| `const.js`         | ✅          | アプリケーション定数のみ         |
+| `.clasp.json`      | ❌          | 本番環境の scriptId が含まれる   |
+| `.clasp-test.json` | ❌          | テスト環境の scriptId が含まれる |
 
 ## 注意事項
 
