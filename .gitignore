@@ -5,6 +5,9 @@
 # 環境変数ファイル
 .env*
 
+# 環境切り替えスクリプト（IDが含まれるため非公開）
+switch-env.js
+
 # Node.js
 node_modules/
 

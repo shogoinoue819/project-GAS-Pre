@@ -119,3 +119,14 @@ function logError(message, error) {
     Logger.log(`Stack trace: ${error.stack}`);
   }
 }
+
+// 環境変数関連の関数は config.js に移動しました
+
+/**
+ * 日付文字列がyyyy-mm-dd形式かどうかを判定する
+ * @param {string} dateString - 判定対象の文字列
+ * @returns {boolean} yyyy-mm-dd形式の場合true
+ */
+function isYYYYMMDD(dateString) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(dateString);
+}
