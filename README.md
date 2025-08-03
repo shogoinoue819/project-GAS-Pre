@@ -131,7 +131,7 @@ exportSpecificDailySheetAsPDF("2025-01-15");
 | ファイル           | GitHub 公開 | 理由                                  |
 | ------------------ | ----------- | ------------------------------------- |
 | `switch-env.js`    | ❌          | ID が含まれるため非公開               |
-| `const-env.js`     | ✅          | 一時的なファイル、push 後に変更される |
+| `const-env.js`     | ❌          | ID が含まれるため非公開               |
 | `const.js`         | ✅          | アプリケーション定数のみ              |
 | `.clasp.json`      | ❌          | 本番環境の scriptId が含まれる        |
 | `.clasp-test.json` | ❌          | テスト環境の scriptId が含まれる      |
@@ -141,6 +141,7 @@ exportSpecificDailySheetAsPDF("2025-01-15");
 - **環境切り替え**: push 前に必ず`node switch-env.js [環境名]`を実行してください
 - **ID 管理**: 環境別の ID は`switch-env.js`で一元管理します
 - **セキュリティ**: 機密情報を含むファイルは`.gitignore`で除外されています
+- **重要**: `const-env.js`は自動生成されるファイルのため、手動で編集しないでください
 
 ## トラブルシューティング
 
