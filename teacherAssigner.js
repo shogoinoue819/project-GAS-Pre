@@ -93,102 +93,71 @@ function getPriorityList(lessonCode, prioritySheet) {
 
   for (let col = 1; col <= lastCol; col++) {
     const lessonCodeCell = prioritySheet
-      .getRange(PRIORITY_LESSON_ROW, col)
+      .getRange(PRIORITY_SHEET.LESSON_ROW, col)
       .getValue();
 
     if (lessonCodeCell === lessonCode) {
       // 優先順位リストを取得（2行目から最後まで）
-      const priorityList = [];
+      const priorityList = prioritySheet
+        .getRange(
+          PRIORITY_SHEET.PRIORITY_ROWS.FIRST,
+          col,
+          prioritySheet.getLastRow() - PRIORITY_SHEET.PRIORITY_ROWS.FIRST + 1,
+          1
+        )
+        .getValues()
+        .flat()
+        .filter((name) => name && name !== "");
 
-      // 優先順位①
-      const firstTeacher = prioritySheet
-        .getRange(PRIORITY_FIRST_ROW, col)
-        .getValue();
-      if (firstTeacher && firstTeacher !== "") {
-        priorityList.push(firstTeacher);
-      }
-
-      // 優先順位②
-      const secondTeacher = prioritySheet
-        .getRange(PRIORITY_SECOND_ROW, col)
-        .getValue();
-      if (secondTeacher && secondTeacher !== "") {
-        priorityList.push(secondTeacher);
-      }
-
-      // 優先順位③
-      const thirdTeacher = prioritySheet
-        .getRange(PRIORITY_THIRD_ROW, col)
-        .getValue();
-      if (thirdTeacher && thirdTeacher !== "") {
-        priorityList.push(thirdTeacher);
-      }
-
-      // 優先順位③の下に追加された講師たちも取得
-      const lastRow = prioritySheet.getLastRow();
-      for (let row = PRIORITY_THIRD_ROW + 1; row <= lastRow; row++) {
-        const additionalTeacher = prioritySheet.getRange(row, col).getValue();
-        if (additionalTeacher && additionalTeacher !== "") {
-          priorityList.push(additionalTeacher);
-        }
-      }
-
-      Logger.log(
-        `講義${lessonCode}の優先順位リスト: ${priorityList.join(", ")}`
-      );
       return priorityList;
     }
   }
 
-  return null;
+  return [];
 }
 
 /**
- * 講師の勤務希望を確認（重複割り当てチェック付き）
- * @param {string} teacherName - 講師名（表示名）
+ * 講師が指定されたコマで利用可能かどうかを判定
+ * @param {string} teacherName - 講師名
  * @param {Sheet} dateSheet - 日次シート
  * @param {Object} assignedTeachers - 割り当て済み講師の管理オブジェクト
  * @param {number} period - コマ数
- * @returns {boolean} 勤務可能な場合true
+ * @returns {boolean} 利用可能な場合true
  */
 function isAvailable(teacherName, dateSheet, assignedTeachers, period) {
-  // 日次シートで講師の列を検索
+  // 既にそのコマに割り当て済みの場合はfalse
+  if (assignedTeachers[period].has(teacherName)) {
+    return false;
+  }
+
+  // 講師の列を特定
   const teacherCol = findTeacherColumn(teacherName, dateSheet);
   if (teacherCol === -1) {
-    Logger.log(`講師「${teacherName}」の列が見つかりません`);
     return false;
   }
 
-  // 希望行から勤務希望を取得
-  const wishValue = dateSheet.getRange(DAILY_WISH_ROW, teacherCol).getValue();
+  // 希望行の値を確認
+  const wishValue = dateSheet
+    .getRange(DAILY_SHEET.WISH_ROW, teacherCol)
+    .getValue();
 
-  // 希望が「◯」でない場合は勤務不可
-  if (wishValue !== WISH_TRUE) {
-    Logger.log(`講師「${teacherName}」は勤務希望がありません（${wishValue}）`);
-    return false;
-  }
-
-  // 同じコマに既に割り当て済みかチェック
-  if (assignedTeachers[period].has(teacherName)) {
-    Logger.log(`講師「${teacherName}」は${period}コマ目に既に割り当て済みです`);
-    return false;
-  }
-
-  return true;
+  // 希望がWISH_TRUEの場合のみtrue
+  return wishValue === STRINGS.WISH.TRUE;
 }
 
 /**
- * 講師名に対応する列番号を検索
+ * 講師名から日次シートの列番号を取得
  * @param {string} teacherName - 講師名
  * @param {Sheet} dateSheet - 日次シート
  * @returns {number} 列番号（見つからない場合は-1）
  */
 function findTeacherColumn(teacherName, dateSheet) {
+  const staffRow = DAILY_SHEET.STAFF_ROW;
   const lastCol = dateSheet.getLastColumn();
 
-  for (let col = DAILY_STAFF_START_COL; col <= lastCol; col++) {
-    const staffName = dateSheet.getRange(DAILY_STAFF_ROW, col).getValue();
-    if (staffName === teacherName) {
+  for (let col = DAILY_SHEET.STAFF_START_COL; col <= lastCol; col++) {
+    const cellValue = dateSheet.getRange(staffRow, col).getValue();
+    if (cellValue === teacherName) {
       return col;
     }
   }
@@ -197,246 +166,183 @@ function findTeacherColumn(teacherName, dateSheet) {
 }
 
 /**
- * 割り当て結果を日次シートに反映
+ * 講義情報を日次シートに反映
  * @param {Array} lessons - 講義オブジェクトの配列
  * @param {Sheet} dateSheet - 日次シート
  */
 function fillLessonCodesToSheet(lessons, dateSheet) {
-  Logger.log("日次シートへの反映を開始します...");
+  try {
+    // 既存の授業エリアをクリア
+    resetLessonArea(dateSheet);
 
-  // コマ部分を一旦リセット
-  resetLessonArea(dateSheet);
+    // 各講義の情報をシートに反映
+    lessons.forEach((lesson) => {
+      if (!lesson.assignedTeacher) return;
 
-  // 割り当て済みの講義をフィルタリング
-  const assignedLessons = lessons.filter((lesson) => lesson.assignedTeacher);
-  const unassignedLessons = lessons.filter((lesson) => !lesson.assignedTeacher);
+      // 講師の列を特定
+      const teacherCol = findTeacherColumn(lesson.assignedTeacher, dateSheet);
+      if (teacherCol === -1) return;
 
-  Logger.log(`割り当て済み講義数: ${assignedLessons.length}`);
-  Logger.log(`未割り当て講義数: ${unassignedLessons.length}`);
+      // コマ数に応じた行を特定
+      const lessonRow = DAILY_SHEET.LESSON_ROWS[getPeriodKey(lesson.period)];
+      if (!lessonRow) return;
 
-  // 未割り当て講義の詳細をログ出力
-  if (unassignedLessons.length > 0) {
-    Logger.log("【未割り当て講義一覧】");
-    unassignedLessons.forEach((lesson, index) => {
-      Logger.log(
-        `${index + 1}. ${lesson.lessonCode} (${lesson.grade}${
-          lesson.subject
-        }) - ${lesson.period}コマ目`
-      );
-    });
-    Logger.log("※未割り当ての講義は日次シートに反映されません");
-  }
+      // セルに講義コードを設定
+      const cell = dateSheet.getRange(lessonRow, teacherCol);
+      cell.setValue(lesson.lessonCode);
 
-  assignedLessons.forEach((lesson) => {
-    // 講師の列を検索
-    const teacherCol = findTeacherColumn(lesson.assignedTeacher, dateSheet);
-    if (teacherCol !== -1) {
-      // コマ位置の行を計算
-      const lessonRow = WEEK_PERIOD1_ROW + lesson.period - 1;
-
-      // 対象セルを取得
-      const targetCell = dateSheet.getRange(lessonRow, teacherCol);
-
-      // 講義コードをセット
-      targetCell.setValue(lesson.lessonCode);
-
-      // スタイル情報を適用
+      // スタイルを適用
       if (lesson.style) {
-        applyCellStyle(targetCell, lesson.style);
+        applyCellStyle(cell, lesson.style);
       }
+    });
 
-      Logger.log(
-        `講義コード「${lesson.lessonCode}」を${lesson.assignedTeacher}の${lesson.period}コマ目に設定しました（スタイル付き）`
-      );
-    } else {
-      Logger.log(`講師「${lesson.assignedTeacher}」の列が見つかりません`);
-    }
-  });
-
-  Logger.log("日次シートへの反映が完了しました");
+    Logger.log("講義情報のシート反映が完了しました");
+  } catch (error) {
+    logError("講義情報のシート反映でエラーが発生しました", error);
+    throw error;
+  }
 }
 
 /**
- * 日次シートのコマ部分をリセット
+ * 授業エリアをリセット
  * @param {Sheet} dateSheet - 日次シート
  */
 function resetLessonArea(dateSheet) {
-  Logger.log("コマ部分のリセットを開始します...");
-
-  // スタッフの列数を取得
+  const staffRow = DAILY_SHEET.STAFF_ROW;
   const lastCol = dateSheet.getLastColumn();
 
-  // コマ部分の範囲を定義（1行目と1列目は除外）
-  // 行：DAILY_LESSON1_ROW から DAILY_LESSON3_ROW（3行目から5行目）
-  // 列：DAILY_STAFF_START_COL から lastCol（2列目から最後まで）
-  const startRow = DAILY_LESSON1_ROW;
-  const endRow = DAILY_LESSON3_ROW;
-  const startCol = DAILY_STAFF_START_COL;
-  const endCol = lastCol;
-
-  // コマ部分の範囲を取得
-  const lessonRange = dateSheet.getRange(
-    startRow,
-    startCol,
-    endRow - startRow + 1,
-    endCol - startCol + 1
-  );
-
-  // 内容とスタイルをクリア
-  lessonRange.clearContent();
-  lessonRange.setBackground(null);
-  lessonRange.setFontColor(null);
-  lessonRange.setFontWeight("normal");
-  lessonRange.setFontSize(10);
-  lessonRange.setFontFamily("Arial");
-  lessonRange.setHorizontalAlignment("center");
-  lessonRange.setVerticalAlignment("middle");
-
-  Logger.log(
-    `コマ部分をリセットしました（${startRow}行目-${endRow}行目、${startCol}列目-${endCol}列目）`
-  );
+  // 各コマの行をクリア
+  Object.values(DAILY_SHEET.LESSON_ROWS).forEach((row) => {
+    const clearRange = dateSheet.getRange(
+      row,
+      DAILY_SHEET.STAFF_START_COL,
+      1,
+      lastCol - DAILY_SHEET.STAFF_START_COL + 1
+    );
+    clearRange.clearContent();
+    clearRange.setBackground(null);
+  });
 }
 
 /**
- * セルにスタイル情報を適用
- * @param {Range} cell - 対象セル
+ * コマ数から設定キーを取得
+ * @param {number} period - コマ数
+ * @returns {string} 設定キー
+ */
+function getPeriodKey(period) {
+  const periodMap = {
+    1: "FIRST",
+    2: "SECOND",
+    3: "THIRD",
+  };
+  return periodMap[period];
+}
+
+/**
+ * セルにスタイルを適用
+ * @param {Range} cell - セルオブジェクト
  * @param {Object} style - スタイル情報オブジェクト
  */
 function applyCellStyle(cell, style) {
   try {
-    // 背景色を設定
     if (style.backgroundColor) {
       cell.setBackground(style.backgroundColor);
     }
-
-    // 文字色を設定
     if (style.fontColor) {
       cell.setFontColor(style.fontColor);
     }
-
-    // フォントファミリーを設定
-    if (style.fontFamily) {
-      cell.setFontFamily(style.fontFamily);
-    }
-
-    // フォントサイズを設定
-    if (style.fontSize) {
-      cell.setFontSize(style.fontSize);
-    }
-
-    // 太字設定
-    if (style.fontBold !== undefined) {
-      cell.setFontWeight(style.fontBold ? "bold" : "normal");
-    }
-
-    // 水平方向の配置を設定
-    if (style.horizontalAlignment) {
-      cell.setHorizontalAlignment(style.horizontalAlignment);
-    }
-
-    // 垂直方向の配置を設定
-    if (style.verticalAlignment) {
-      cell.setVerticalAlignment(style.verticalAlignment);
-    }
-
-    // ボーダーを設定
     if (style.borders) {
       cell.setBorder(
         style.borders.top,
-        style.borders.right,
-        style.borders.bottom,
         style.borders.left,
+        style.borders.bottom,
+        style.borders.right,
         style.borders.vertical,
         style.borders.horizontal
       );
     }
+    if (style.fontFamily) {
+      cell.setFontFamily(style.fontFamily);
+    }
+    if (style.fontSize) {
+      cell.setFontSize(style.fontSize);
+    }
+    if (style.fontBold !== undefined) {
+      cell.setFontWeight(style.fontBold ? "bold" : "normal");
+    }
+    if (style.horizontalAlignment) {
+      cell.setHorizontalAlignment(style.horizontalAlignment);
+    }
+    if (style.verticalAlignment) {
+      cell.setVerticalAlignment(style.verticalAlignment);
+    }
   } catch (error) {
-    Logger.log(`スタイル適用エラー: ${error.message}`);
+    logError("セルスタイル適用でエラーが発生しました", error);
   }
 }
 
 /**
- * 複数セルに一括でスタイルを適用（将来的な拡張用）
+ * 複数のセルにスタイルを一括適用
  * @param {Array} cells - セルオブジェクトの配列
  * @param {Array} styles - スタイル情報オブジェクトの配列
  */
 function applyCellStylesBatch(cells, styles) {
-  if (cells.length !== styles.length) {
-    Logger.log("セル数とスタイル数が一致しません");
-    return;
-  }
-
   cells.forEach((cell, index) => {
-    applyCellStyle(cell, styles[index]);
+    if (styles[index]) {
+      applyCellStyle(cell, styles[index]);
+    }
   });
 }
 
 /**
- * 講師割り当て結果のサマリーを出力
+ * 割り当て結果のサマリーを出力
  * @param {Array} lessons - 講義オブジェクトの配列
  */
 function printAssignmentSummary(lessons) {
+  const assignedLessons = lessons.filter((lesson) => lesson.assignedTeacher);
+  const unassignedLessons = lessons.filter((lesson) => !lesson.assignedTeacher);
+
   Logger.log("=== 講師割り当て結果サマリー ===");
+  Logger.log(`総講義数: ${lessons.length}`);
+  Logger.log(`割り当て成功: ${assignedLessons.length}`);
+  Logger.log(`割り当て失敗: ${unassignedLessons.length}`);
 
-  const assignedCount = lessons.filter(
-    (lesson) => lesson.assignedTeacher
-  ).length;
-  const totalCount = lessons.length;
-
-  Logger.log(`総講義数: ${totalCount}`);
-  Logger.log(`割り当て済み: ${assignedCount}`);
-  Logger.log(`未割り当て: ${totalCount - assignedCount}`);
-
-  lessons.forEach((lesson, index) => {
-    const status = lesson.assignedTeacher
-      ? `✅ ${lesson.assignedTeacher}`
-      : "❌ 未割り当て";
-
-    Logger.log(
-      `${index + 1}. ${lesson.lessonCode} (${lesson.grade}${
-        lesson.subject
-      }) - ${status}`
-    );
-  });
-
-  Logger.log("================================");
+  if (unassignedLessons.length > 0) {
+    Logger.log("割り当て失敗した講義:");
+    unassignedLessons.forEach((lesson) => {
+      Logger.log(`- ${lesson.lessonCode} (${lesson.grade}${lesson.subject})`);
+    });
+  }
 }
 
 /**
- * 授業の優先度を計算
+ * 講義の優先度を計算
  * @param {Object} lesson - 講義オブジェクト
- * @returns {number} 優先度スコア（高いほど優先）
+ * @returns {number} 優先度（数値が大きいほど優先度が高い）
  */
 function calculateLessonPriority(lesson) {
   let priority = 0;
 
-  // 学年による優先度（高学年ほど優先）
+  // 学年による優先度（高学年ほど優先度が高い）
   priority += lesson.gradeNumber * 10;
 
-  // 教科による優先度
-  const subjectPriority = {
-    算数: 5, // 算数は最重要
-    国語: 4, // 国語は重要
-    理科: 3, // 理科は中程度
-    社会: 2, // 社会は低め
-  };
-  priority += subjectPriority[lesson.subject] || 0;
-
-  // コマによる優先度（早いコマほど優先）
-  priority += (4 - lesson.period) * 2;
+  // 教科による優先度（算数 > 国語 > 理科 > 社会）
+  const subjectPriority = { M: 4, J: 3, R: 2, S: 1 };
+  priority += subjectPriority[lesson.subjectCode] || 0;
 
   return priority;
 }
 
 /**
- * 授業を優先度順にソート
+ * 講義を優先度順にソート
  * @param {Array} lessons - 講義オブジェクトの配列
- * @returns {Array} 優先度順にソートされた講義配列
+ * @returns {Array} ソートされた講義オブジェクトの配列
  */
 function sortLessonsByPriority(lessons) {
   return lessons.slice().sort((a, b) => {
     const priorityA = calculateLessonPriority(a);
     const priorityB = calculateLessonPriority(b);
-    return priorityB - priorityA; // 降順（優先度の高い順）
+    return priorityB - priorityA; // 降順（優先度が高い順）
   });
 }

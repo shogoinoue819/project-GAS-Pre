@@ -3,8 +3,6 @@
  * 講義情報の取得、解析、管理を行う
  */
 
-
-
 /**
  * 現在の日付の講義情報を取得する
  * @returns {Array} 講義オブジェクトの配列
@@ -14,10 +12,10 @@ function getCurrentDateLessons() {
 
   // 現在の日付を取得
   const currentDate = new Date();
-  const currentDateFormatted = formatDateToMD(currentDate);
+  const currentDateFormatted = generateDailySheetName(currentDate);
 
   // 現在の日付シートを取得
-  const currentDateSheet = ss.getSheetByName(currentDateFormatted);
+  const currentDateSheet = getSheetSafely(ss, currentDateFormatted);
   if (!currentDateSheet) {
     Logger.log(`現在の日付シート「${currentDateFormatted}」が見つかりません。`);
     return [];
@@ -28,7 +26,7 @@ function getCurrentDateLessons() {
   Logger.log(`現在の日付: ${currentDateFormatted}, 曜日: ${dayOfWeek}`);
 
   // 曜日テンプレートシートを取得
-  const weekdayTemplateSheet = ss.getSheetByName(dayOfWeek);
+  const weekdayTemplateSheet = getSheetSafely(ss, dayOfWeek);
   if (!weekdayTemplateSheet) {
     Logger.log(`曜日テンプレートシート「${dayOfWeek}」が見つかりません。`);
     return [];
@@ -50,10 +48,18 @@ function extractLessonsFromTemplate(templateSheet) {
   const lessons = [];
 
   // 定数で定義された範囲のみを走査
-  // 行：WEEK_PERIOD1_ROW から WEEK_PERIOD3_ROW
-  // 列：WEEK_YOUNG_COL から WEEK_SIXTH_COL
-  for (let row = WEEK_PERIOD1_ROW; row <= WEEK_PERIOD3_ROW; row++) {
-    for (let col = WEEK_YOUNG_COL; col <= WEEK_SIXTH_COL; col++) {
+  // 行：WEEK_SHEET.PERIOD_ROWS.FIRST から WEEK_SHEET.PERIOD_ROWS.THIRD
+  // 列：WEEK_SHEET.GRADE_COLS.YOUNG から WEEK_SHEET.GRADE_COLS.SIXTH
+  for (
+    let row = WEEK_SHEET.PERIOD_ROWS.FIRST;
+    row <= WEEK_SHEET.PERIOD_ROWS.THIRD;
+    row++
+  ) {
+    for (
+      let col = WEEK_SHEET.GRADE_COLS.YOUNG;
+      col <= WEEK_SHEET.GRADE_COLS.SIXTH;
+      col++
+    ) {
       const cell = templateSheet.getRange(row, col);
       const cellValue = cell.getValue();
 
@@ -63,13 +69,12 @@ function extractLessonsFromTemplate(templateSheet) {
       }
 
       // 講義コードとして認識できる文字列かチェック
-      // 例：「1M」「2J」「3R」「4S」など
-      if (isLessonCell(cellValue)) {
+      if (isValidLessonCode(cellValue)) {
         // 講義情報を解析
-        const lessonInfo = parseLessonCode(cellValue);
+        const lessonInfo = getLessonInfo(cellValue);
 
-        // コマ数を行番号から判定（3行目=1コマ目、4行目=2コマ目、5行目=3コマ目）
-        const periodNumber = row - WEEK_PERIOD1_ROW + 1;
+        // コマ数を行番号から判定
+        const periodNumber = row - WEEK_SHEET.PERIOD_ROWS.FIRST + 1;
 
         // セルのスタイル情報を取得
         const cellStyle = extractCellStyle(cell);
@@ -117,7 +122,7 @@ function extractCellStyle(cell) {
  * @param {string} cellValue - セルの値
  * @returns {boolean} 講義コードの場合true
  */
-function isLessonCell(cellValue) {
+function isValidLessonCode(cellValue) {
   if (typeof cellValue !== "string") {
     return false;
   }
@@ -134,10 +139,40 @@ function isLessonCell(cellValue) {
  * @param {string} lessonCode - 講義コード（例：「1M」「2J」）
  * @returns {Object} 講義情報オブジェクト または null
  */
-function parseLessonCode(lessonCode) {
-  if (!isLessonCell(lessonCode)) {
+function getLessonInfo(lessonCode) {
+  if (!isValidLessonCode(lessonCode)) {
     return null;
   }
 
   return LESSON_CODES[lessonCode] || null;
+}
+
+/**
+ * 指定された日付の講義情報を取得
+ * @param {string} dateString - 日付文字列（M/d形式）
+ * @returns {Array} 講義オブジェクトの配列
+ */
+function getLessonsForDate(dateString) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // 日付からDateオブジェクトを作成
+  const targetDate = getDateFromDailySheetName(dateString);
+  if (!targetDate) {
+    Logger.log(`日付形式が不正です: ${dateString}`);
+    return [];
+  }
+
+  // 曜日を判定
+  const dayOfWeek = getDayOfWeek(targetDate);
+  Logger.log(`日付: ${dateString}, 曜日: ${dayOfWeek}`);
+
+  // 曜日テンプレートシートを取得
+  const weekdayTemplateSheet = getSheetSafely(ss, dayOfWeek);
+  if (!weekdayTemplateSheet) {
+    Logger.log(`曜日テンプレートシート「${dayOfWeek}」が見つかりません`);
+    return [];
+  }
+
+  // 講義情報を取得
+  return extractLessonsFromTemplate(weekdayTemplateSheet);
 }

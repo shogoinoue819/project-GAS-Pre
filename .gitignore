@@ -10,6 +10,7 @@ switch-env.js
 
 # 環境別定数ファイル（IDが含まれるため非公開）
 const-env.js
+env-config.js
 
 # Node.js
 node_modules/

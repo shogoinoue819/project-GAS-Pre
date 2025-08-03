@@ -1,281 +1,200 @@
-# Google Apps Script プロジェクト
+# Google Apps Script プロジェクト - 授業シフト管理システム
 
-授業シフト管理システムの Google Apps Script プロジェクトです。
+## 📋 概要
 
-## 機能
+このプロジェクトは、Google Apps Script を使用した授業シフト管理システムです。
+スタッフの希望シフトを反映し、自動で講師を割り当てて日次シートに反映する機能を提供します。
 
-- **日次シート作成**: 指定期間の日次シートを自動生成
-- **スタッフシート作成**: スタッフ別の希望シフトシートを自動生成
-- **希望シフト反映**: スタッフの希望を日次シートに反映
-- **講師割り当て**: 授業に講師を自動割り当て
-- **PDF エクスポート**: 日次シートを PDF 化して Google Drive に保存
-
-## 環境管理
-
-このプロジェクトは本番環境とテスト環境を分離して管理しています。
-
-### 環境設定ファイル
-
-| 環境       | clasp 設定         | 説明                                     |
-| ---------- | ------------------ | ---------------------------------------- |
-| 本番環境   | `.clasp.json`      | 本番用 Google Apps Script プロジェクト   |
-| テスト環境 | `.clasp-test.json` | テスト用 Google Apps Script プロジェクト |
-
-### 環境別 ID 管理
-
-環境別の ID（スプレッドシート ID、フォルダ ID など）は`switch-env.js`で管理し、`const-env.js`に自動反映されます。
-
-## セットアップ
-
-### 1. 必要なファイルの作成
-
-このプロジェクトを clone した後、以下のファイルを手動で作成する必要があります：
-
-#### **switch-env.js の作成**
-
-```javascript
-#!/usr/bin/env node
-
-const fs = require("fs");
-const path = require("path");
-
-const args = process.argv.slice(2);
-const environment = args[0] || "test";
-
-const ENV_CONFIG = {
-  production: {
-    SPREADSHEET_ID: "自分の本番用スプレッドシートID",
-    FOLDER_ID: "自分の本番用フォルダID",
-    PDF_FOLDER_ID: "自分の本番用PDFフォルダID",
-  },
-  test: {
-    SPREADSHEET_ID: "自分のテスト用スプレッドシートID",
-    FOLDER_ID: "自分のテスト用フォルダID",
-    PDF_FOLDER_ID: "自分のテスト用PDFフォルダID",
-  },
-};
-
-// env-constants.jsのパス
-const envConstantsPath = path.join(__dirname, "const-env.js");
-
-// ファイル内容を読み込み
-function readEnvConstants() {
-  try {
-    return fs.readFileSync(envConstantsPath, "utf8");
-  } catch (error) {
-    console.error(
-      "エラー: const-env.js を読み込めませんでした:",
-      error.message
-    );
-    process.exit(1);
-  }
-}
-
-// 環境に応じてIDを置換
-function replaceIds(content, config) {
-  content = content.replace(
-    /const SPREADSHEET_ID = "[^"]*";/,
-    `const SPREADSHEET_ID = "${config.SPREADSHEET_ID}";`
-  );
-  content = content.replace(
-    /const FOLDER_ID = "[^"]*";/,
-    `const FOLDER_ID = "${config.FOLDER_ID}";`
-  );
-  content = content.replace(
-    /const PDF_FOLDER_ID = "[^"]*";/,
-    `const PDF_FOLDER_ID = "${config.PDF_FOLDER_ID}";`
-  );
-  return content;
-}
-
-// ファイルに書き込み
-function writeEnvConstants(content) {
-  try {
-    fs.writeFileSync(envConstantsPath, content, "utf8");
-    console.log("const-env.js を更新しました");
-  } catch (error) {
-    console.error(
-      "エラー: const-env.js の書き込みに失敗しました:",
-      error.message
-    );
-    process.exit(1);
-  }
-}
-
-// メイン処理
-function main() {
-  if (!ENV_CONFIG[environment]) {
-    console.error(`エラー: 不明な環境 "${environment}"`);
-    console.log("使用可能な環境: production, test");
-    process.exit(1);
-  }
-
-  const config = ENV_CONFIG[environment];
-  console.log(`環境設定:`, config);
-
-  let content = readEnvConstants();
-  content = replaceIds(content, config);
-  writeEnvConstants(content);
-
-  console.log(`${environment}環境への切り替えが完了しました`);
-}
-
-main();
-```
-
-#### **clasp 設定ファイルの作成**
-
-**.clasp.json（本番環境）**:
-
-```json
-{
-  "scriptId": "自分の本番用scriptId",
-  "rootDir": "./"
-}
-```
-
-**.clasp-test.json（テスト環境）**:
-
-```json
-{
-  "scriptId": "自分のテスト用scriptId",
-  "rootDir": "./"
-}
-```
-
-### 2. 環境 ID の設定
-
-作成した`switch-env.js`ファイルの`ENV_CONFIG`に環境別の ID を設定してください：
-
-```javascript
-const ENV_CONFIG = {
-  production: {
-    SPREADSHEET_ID: "本番用スプレッドシートID",
-    FOLDER_ID: "本番用フォルダID",
-    PDF_FOLDER_ID: "本番用PDF保存フォルダID",
-  },
-  test: {
-    SPREADSHEET_ID: "テスト用スプレッドシートID",
-    FOLDER_ID: "テスト用フォルダID",
-    PDF_FOLDER_ID: "テスト用PDF保存フォルダID",
-  },
-};
-```
-
-### 3. clasp の認証
-
-```bash
-# claspにログイン
-clasp login
-```
-
-## 使用方法
-
-### テスト環境での開発
-
-```bash
-# 自動化スクリプトを使用（推奨）
-./push-test.sh
-
-# または手動で実行
-node switch-env.js test
-clasp --project .clasp-test.json push
-```
-
-### 本番環境へのデプロイ
-
-```bash
-# 自動化スクリプトを使用（推奨）
-./push-production.sh
-
-# または手動で実行
-node switch-env.js production
-clasp --project .clasp.json push
-```
-
-## ファイル構成
+## 🏗️ プロジェクト構造
 
 ```
 project-GAS-Pre/
-├── GAS機能ファイル（push対象）
-│   ├── appsscript.json          # GASプロジェクト設定
-│   ├── const.js                 # アプリケーション定数
-│   ├── const-env.js             # 環境別ID定数
-│   ├── pdfExporter.js           # PDF化機能
-│   ├── utils.js                 # ユーティリティ関数
-│   ├── createMenu.js            # メニュー作成
-│   ├── createDailySheets.js     # 日次シート作成
-│   ├── createStaffSheets.js     # スタッフシート作成
-│   ├── lessonManager.js         # 授業管理
-│   ├── linkStaffList.js         # スタッフリスト連携
-│   ├── reflectLessons.js        # 授業反映
-│   ├── reflectWish.js           # 希望反映
-│   └── teacherAssigner.js       # 講師割り当て
-│
-├── 開発用ファイル（push非対象）
-│   ├── switch-env.js            # 環境切り替えスクリプト
-│   ├── .clasp.json              # 本番環境clasp設定
-│   ├── .clasp-test.json         # テスト環境clasp設定
-│   ├── .claspignore             # push除外設定
-│   ├── .gitignore               # Git除外設定
-│   └── README.md                # ドキュメント
-│
-└── Git管理
-    └── .git/                    # Gitリポジトリ
+├── config.js              # アプリケーション定数（Git管理対象）
+├── env-config.js          # 環境別設定（Git管理対象外）
+├── utils.js               # 共通ユーティリティ関数
+├── sheetManager.js        # シート管理機能
+├── lessonManager.js       # 講義管理機能
+├── wishManager.js         # 希望シフト管理機能
+├── teacherAssigner.js     # 講師割り当て機能
+├── lessonReflector.js     # 授業反映機能
+├── pdfExporter.js         # PDFエクスポート機能
+├── createMenu.js          # カスタムメニュー作成
+├── switch-env.js          # 環境切り替えスクリプト（Git管理対象外）
+├── push-production.sh     # 本番環境デプロイスクリプト
+├── push-test.sh          # テスト環境デプロイスクリプト
+├── appsscript.json       # Apps Script設定ファイル
+├── .clasp.json           # clasp設定ファイル（本番用、Git管理対象外）
+├── .clasp-test.json      # clasp設定ファイル（テスト用、Git管理対象外）
+└── README.md             # このファイル
 ```
 
-## 主要機能
+## 🔧 主要機能
 
-### PDF エクスポート機能
+### 1. シート管理機能 (`sheetManager.js`)
 
-```javascript
-// 環境確認
-checkEnvironmentVariables();
+- **日次シート作成**: メインシートの日程リストから日次シートを一括生成
+- **スタッフシート作成**: メインシートのスタッフリストからスタッフシートを一括生成
+- **スタッフ情報反映**: メインシートのスタッフ表示名と背景色を日次シートテンプレートに反映
 
-// 全日次シートをPDF化
-exportAllDailySheetsAsPDF();
+### 2. 講義管理機能 (`lessonManager.js`)
 
-// 特定の日付シートをPDF化
-exportSpecificDailySheetAsPDF("2025-01-15");
-```
+- **講義情報取得**: 曜日テンプレートシートから講義情報を抽出
+- **講義コード解析**: 講義コードから学年・教科情報を取得
+- **スタイル情報管理**: セルのスタイル情報を保持・適用
 
-### 定数管理
+### 3. 希望シフト管理機能 (`wishManager.js`)
 
-- **`const.js`**: アプリケーション固有の定数（環境非依存）
-- **`const-env.js`**: 環境別の ID 定数（自動生成）
+- **希望シフト反映**: スタッフ個人シートから希望シフトを日次シートに反映
+- **教科担当更新**: スタッフシートの授業可能情報を Priority シートに反映
 
-## セキュリティ
+### 4. 講師割り当て機能 (`teacherAssigner.js`)
 
-| ファイル           | GitHub 公開 | 理由                             |
-| ------------------ | ----------- | -------------------------------- |
-| `switch-env.js`    | ❌          | ID が含まれるため非公開          |
-| `const-env.js`     | ❌          | ID が含まれるため非公開          |
-| `const.js`         | ✅          | アプリケーション定数のみ         |
-| `.clasp.json`      | ❌          | 本番環境の scriptId が含まれる   |
-| `.clasp-test.json` | ❌          | テスト環境の scriptId が含まれる |
+- **自動割り当て**: 優先順位と勤務希望を考慮した講師の自動割り当て
+- **重複チェック**: 同一コマでの重複割り当てを防止
+- **優先度計算**: 学年・教科による講義の優先度計算
 
-## 注意事項
+### 5. 授業反映機能 (`lessonReflector.js`)
 
-- **環境切り替え**: push 前に必ず`node switch-env.js [環境名]`を実行してください
-- **ID 管理**: 環境別の ID は`switch-env.js`で一元管理します
-- **セキュリティ**: 機密情報を含むファイルは`.gitignore`で除外されています
-- **重要**: `const-env.js`は自動生成されるファイルのため、手動で編集しないでください
+- **全日程反映**: 全日次シートでの講師割り当てを一括実行
+- **結果集計**: 割り当て結果の統計情報を表示
 
-## トラブルシューティング
+### 6. PDF エクスポート機能 (`pdfExporter.js`)
 
-### clasp push エラー
+- **一括 PDF 化**: 全日次シートを PDF にエクスポート
+- **特定日 PDF 化**: 指定した日付の日次シートを PDF 化
+- **Google Drive 保存**: PDF ファイルを指定フォルダに自動保存
+
+## 🚀 セットアップ
+
+### 1. 環境設定
 
 ```bash
-# 認証の確認
-clasp login
+# テスト環境に切り替え
+node switch-env.js test
 
-# プロジェクト設定の確認
-clasp --project .clasp-test.json info
+# 本番環境に切り替え
+node switch-env.js production
 ```
 
-### 環境変数エラー
+### 2. デプロイ
+
+```bash
+# テスト環境にデプロイ
+./push-test.sh
+
+# 本番環境にデプロイ
+./push-production.sh
+```
+
+## 📝 使用方法
+
+### 1. 初期セットアップ
+
+1. **メニューから「日次シート作成」を実行**
+
+   - メインシートの日程リストから日次シートを生成
+
+2. **メニューから「スタッフシート作成」を実行**
+
+   - メインシートのスタッフリストからスタッフシートを生成
+
+3. **メニューから「スタッフ情報反映」を実行**
+
+   - スタッフの表示名と背景色を日次シートテンプレートに反映
+
+### 2. 日常運用
+
+1. **メニューから「希望シフト反映」を実行**
+
+   - スタッフ個人シートの希望シフトを日次シートに反映
+
+2. **メニューから「教科担当更新」を実行**
+
+   - スタッフシートの授業可能情報を Priority シートに反映
+
+3. **メニューから「全日程授業反映」を実行**
+   - 全日次シートで講師の自動割り当てを実行
+
+### 3. PDF 出力
+
+1. **メニューから「PDF エクスポート」→「全日次シートを PDF 化」を実行**
+   - 全日次シートを PDF にエクスポートして Google Drive に保存
+
+## ⚙️ 設定
+
+### アプリケーション定数 (`config.js`)
 
 ```javascript
-// GASエディタで環境確認を実行
-checkEnvironmentVariables();
+// シート名
+const SHEET_NAMES = {
+  MAIN: "Main",
+  TEMPLATE_DAILY: "Template_Daily",
+  // ...
+};
+
+// 行列インデックス
+const MAIN_SHEET = {
+  DATE: { COL: 1, START_ROW: 4, END_ROW: 10 },
+  // ...
+};
 ```
+
+### 環境別設定 (`env-config.js`)
+
+```javascript
+// スプレッドシートID
+const SPREADSHEET_ID = "your-spreadsheet-id";
+
+// 通常フォルダID
+const FOLDER_ID = "your-folder-id";
+
+// PDF保存用フォルダID
+const PDF_FOLDER_ID = "your-pdf-folder-id";
+```
+
+## 🔒 セキュリティ
+
+### Git 管理対象外ファイル
+
+以下のファイルは機密情報を含むため、Git 管理対象外です：
+
+| ファイル           | 理由                                 |
+| ------------------ | ------------------------------------ |
+| `env-config.js`    | 環境別 ID が含まれるため             |
+| `switch-env.js`    | 環境別 ID が含まれるため             |
+| `.clasp.json`      | 本番環境の scriptId が含まれるため   |
+| `.clasp-test.json` | テスト環境の scriptId が含まれるため |
+
+### 初回セットアップ
+
+プロジェクトを clone した後、以下のファイルを手動で作成してください：
+
+1. **`env-config.js`**: 環境別設定ファイル
+2. **`switch-env.js`**: 環境切り替えスクリプト
+3. **`.clasp.json`**: 本番環境用 clasp 設定
+4. **`.clasp-test.json`**: テスト環境用 clasp 設定
+
+## 🔍 デバッグ
+
+### ログ確認
+
+Google Apps Script の実行ログで詳細な処理状況を確認できます。
+
+### 環境変数チェック
+
+メニューから「PDF エクスポート」→「環境変数チェック」を実行して設定状況を確認できます。
+
+## 📋 注意事項
+
+1. **環境切り替え**: デプロイ前に適切な環境に切り替えてください
+2. **シート構造**: テンプレートシートの構造を変更する場合は定数も更新してください
+3. **権限設定**: PDF エクスポート機能には Google Drive への書き込み権限が必要です
+4. **セキュリティ**: 機密情報を含むファイルは`.gitignore`で除外されています
+
+## 🤝 貢献
+
+プロジェクトの改善提案やバグ報告は、Issue として報告してください。
+
+## 📄 ライセンス
+
+このプロジェクトは内部使用を目的としています。
