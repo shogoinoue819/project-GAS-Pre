@@ -1,3 +1,12 @@
+# Clasp設定ファイル
 .clasp.json
+.clasp-test.json
+
+# 環境変数ファイル
+.env*
+
+# Node.js
 node_modules/
+
+# macOS
 .DS_Store
