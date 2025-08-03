@@ -58,20 +58,22 @@ clasp login
 ### テスト環境での開発
 
 ```bash
-# 1. テスト環境に切り替え
-node switch-env.js test
+# 自動化スクリプトを使用（推奨）
+./push-test.sh
 
-# 2. テスト環境にpush
+# または手動で実行
+node switch-env.js test
 clasp --project .clasp-test.json push
 ```
 
 ### 本番環境へのデプロイ
 
 ```bash
-# 1. 本番環境に切り替え
-node switch-env.js production
+# 自動化スクリプトを使用（推奨）
+./push-production.sh
 
-# 2. 本番環境にpush
+# または手動で実行
+node switch-env.js production
 clasp --project .clasp.json push
 ```
 
