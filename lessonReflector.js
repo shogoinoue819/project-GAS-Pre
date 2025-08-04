@@ -58,7 +58,12 @@ function reflectLessons() {
       }
 
       // 日付からDateオブジェクトを作成
-      const targetDate = getDateFromDailySheetName(dateValue);
+      let targetDate;
+      if (dateValue instanceof Date) {
+        targetDate = dateValue;
+      } else {
+        targetDate = getDateFromDailySheetName(dateValue);
+      }
       if (!targetDate) {
         Logger.log(
           `日次シート「${dailySheetName}」の日付形式が不正です: ${dateValue}`
